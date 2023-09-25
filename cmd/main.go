@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"github.com/MamushevArup/krisha-scraper/krisha/scrap"
 	"github.com/joho/godotenv"
 	"log"
+	"os"
 )
 
 func main() {
@@ -11,5 +13,6 @@ func main() {
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
-	scrap.Scrap()
+	fmt.Println(os.Getenv("TELEGRAM_BOT_TOKEN"))
+	scrap.NewScrap()
 }
