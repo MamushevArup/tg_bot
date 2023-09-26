@@ -41,7 +41,8 @@ func scrapSubPage(c *colly.Collector) *[]map[string]string {
 		keys := make([]string, 0)
 		hmap := make(map[string]string)
 		removeTags("a.btm-map", e)
-		e.ForEach("div.offer__info-title", func(_ int, element *colly.HTMLElement) {
+		e.ForEach("div.offer__info-title", func(i int, element *colly.HTMLElement) {
+			fmt.Println(element, "------")
 			titles = append(titles, element.Text)
 		})
 		e.ForEach("div.offer__advert-short-info", func(_ int, element *colly.HTMLElement) {
@@ -49,7 +50,7 @@ func scrapSubPage(c *colly.Collector) *[]map[string]string {
 			keys = append(keys, val)
 		})
 		price := e.ChildText("div.offer__price, p.offer__price")
-		desc := e.ChildText("div.offer__advert-title h1")
+		desc := e.ChildText("h1")
 		fmt.Println(desc)
 		hmap["Ввод"] = desc
 		hmap["Цена"] = price
