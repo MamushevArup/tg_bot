@@ -2,14 +2,18 @@ package scrap
 
 import (
 	"fmt"
+	"github.com/MamushevArup/krisha-scraper/models"
 	"github.com/gocolly/colly"
 	"log"
+	"regexp"
+	"strconv"
 	"strings"
+	"time"
 )
 
 const krishaURL = "https://krisha.kz"
 
-func NewScrap() *[]map[string]string {
+func NewScrap() *[]models.House {
 	c := colly.NewCollector()
 	arrjson := scrapSubPage(c)
 	scrapMain(c)
@@ -19,6 +23,70 @@ func NewScrap() *[]map[string]string {
 	}
 	fmt.Println(arrjson)
 	return arrjson
+}
+
+func scrapSubPage(c *colly.Collector) *[]models.House {
+	houses := make([]models.House, 0)
+	c.OnHTML("div.layout__content", func(e *colly.HTMLElement) {
+		hmap := make(map[string]string)
+		removeTags("a.btm-map", e)
+		titles := loopDiv(e, "div.offer__info-title")
+		keys := loopDiv(e, "div.offer__advert-short-info")
+		price := text(e, "div.offer__price, p.offer__price")
+		desc := text(e, "h1")
+		for i, title := range titles {
+			hmap[title] = keys[i]
+		}
+		pr, err := parsePrice(price)
+		yearofbuild, err := parsePrice(hmap["Год постройки"])
+		if err != nil {
+			log.Fatal("Cannot convert the string to the int", err)
+		}
+
+		house := &models.House{
+			Link:               e.Request.URL.String(),
+			Intro:              desc,
+			Price:              pr,
+			City:               trimSpace(hmap["Город"]),
+			HouseType:          trimSpace(hmap["Тип дома"]),
+			ResidentialComplex: trimSpace(hmap["Жилой комплекс"]),
+			YearOfBuild:        uint16(yearofbuild),
+			Floor:              trimSpace(hmap["Этаж"]),
+			Area:               trimSpace(hmap["Площадь, м²"]),
+			Bathroom:           trimSpace(hmap["Санузел"]),
+			Ceil:               trimSpace(hmap["Потолки"]),
+			FormerHostel:       trimSpace(hmap["Бывшее общжитие"]),
+			State:              trimSpace(hmap["Состояние"]),
+			CreatedAt:          time.Now().Format("2006-01-02 15:04:05"),
+		}
+		houses = append(houses, *house)
+	})
+	return &houses
+}
+func text(e *colly.HTMLElement, query string) string {
+	return e.ChildText(query)
+}
+func loopDiv(e *colly.HTMLElement, query string) []string {
+	arr := make([]string, 0)
+	e.ForEach(query, func(_ int, element *colly.HTMLElement) {
+		val := trimSpace(element.Text)
+		arr = append(arr, val)
+	})
+	return arr
+}
+
+func parsePrice(priceStr string) (int, error) {
+	// Remove non-numeric characters (e.g., spaces, '〒') using regular expressions
+	re := regexp.MustCompile(`[^\d]+`)
+	cleanPriceStr := re.ReplaceAllString(priceStr, "")
+
+	// Convert to an integer
+	priceInt, err := strconv.Atoi(cleanPriceStr)
+	if err != nil {
+		return -1, err
+	}
+
+	return priceInt, nil
 }
 
 func visitLink(c *colly.Collector, url string) error {
@@ -34,35 +102,7 @@ func removeTags(goquery string, e *colly.HTMLElement) {
 		a.DOM.Remove()
 	})
 }
-func scrapSubPage(c *colly.Collector) *[]map[string]string {
-	var arrjson []map[string]string
-	c.OnHTML("div.layout__content", func(e *colly.HTMLElement) {
-		titles := make([]string, 0)
-		keys := make([]string, 0)
-		hmap := make(map[string]string)
-		removeTags("a.btm-map", e)
-		e.ForEach("div.offer__info-title", func(i int, element *colly.HTMLElement) {
-			fmt.Println(element, "------")
-			titles = append(titles, element.Text)
-		})
-		e.ForEach("div.offer__advert-short-info", func(_ int, element *colly.HTMLElement) {
-			val := strings.TrimSpace(element.Text)
-			keys = append(keys, val)
-		})
-		price := e.ChildText("div.offer__price, p.offer__price")
-		desc := e.ChildText("h1")
-		fmt.Println(desc)
-		hmap["Ввод"] = desc
-		hmap["Цена"] = price
-		for i, title := range titles {
-			hmap[title] = keys[i]
-		}
-		hmap["Ссылка"] = e.Request.URL.String()
-		arrjson = append(arrjson, hmap)
-	})
 
-	return &arrjson
-}
 func scrapMain(c *colly.Collector) {
 	c.OnHTML("div.a-card__header-left", func(e *colly.HTMLElement) {
 		link := e.ChildAttrs("a[href].a-card__title", "href")
@@ -72,4 +112,7 @@ func scrapMain(c *colly.Collector) {
 			return
 		}
 	})
+}
+func trimSpace(arg string) string {
+	return strings.TrimSpace(arg)
 }
