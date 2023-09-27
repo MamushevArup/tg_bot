@@ -3,26 +3,29 @@ package scrap
 import (
 	"fmt"
 	"github.com/MamushevArup/krisha-scraper/models"
+	"github.com/MamushevArup/krisha-scraper/utils"
 	"github.com/gocolly/colly"
 	"log"
-	"regexp"
-	"strconv"
-	"strings"
 	"time"
 )
 
 const krishaURL = "https://krisha.kz"
 
-func NewScrap() *[]models.House {
+func NewScrap() string {
 	c := colly.NewCollector()
-	arrjson := scrapSubPage(c)
+	houses := scrapSubPage(c)
 	scrapMain(c)
 	err := visitLink(c, krishaURL+"/prodazha/kvartiry/")
 	if err != nil {
-		return nil
+		return ""
 	}
-	fmt.Println(arrjson)
-	return arrjson
+	housesJSON, err := utils.ConvertToJSON(houses)
+	if err != nil {
+		log.Fatal("Cannot convert to the json")
+		return ""
+	}
+	fmt.Print(housesJSON)
+	return housesJSON
 }
 
 func scrapSubPage(c *colly.Collector) *[]models.House {
@@ -37,8 +40,8 @@ func scrapSubPage(c *colly.Collector) *[]models.House {
 		for i, title := range titles {
 			hmap[title] = keys[i]
 		}
-		pr, err := parsePrice(price)
-		yearofbuild, err := parsePrice(hmap["Год постройки"])
+		pr, err := parseInt(price)
+		yearofbuild, err := parseInt(hmap["Год постройки"])
 		if err != nil {
 			log.Fatal("Cannot convert the string to the int", err)
 		}
@@ -62,57 +65,4 @@ func scrapSubPage(c *colly.Collector) *[]models.House {
 		houses = append(houses, *house)
 	})
 	return &houses
-}
-func text(e *colly.HTMLElement, query string) string {
-	return e.ChildText(query)
-}
-func loopDiv(e *colly.HTMLElement, query string) []string {
-	arr := make([]string, 0)
-	e.ForEach(query, func(_ int, element *colly.HTMLElement) {
-		val := trimSpace(element.Text)
-		arr = append(arr, val)
-	})
-	return arr
-}
-
-func parsePrice(priceStr string) (int, error) {
-	// Remove non-numeric characters (e.g., spaces, '〒') using regular expressions
-	re := regexp.MustCompile(`[^\d]+`)
-	cleanPriceStr := re.ReplaceAllString(priceStr, "")
-
-	// Convert to an integer
-	priceInt, err := strconv.Atoi(cleanPriceStr)
-	if err != nil {
-		return -1, err
-	}
-
-	return priceInt, nil
-}
-
-func visitLink(c *colly.Collector, url string) error {
-	err := c.Visit(url)
-	if err != nil {
-		log.Fatal("Error while parsing this link", url)
-		return err
-	}
-	return nil
-}
-func removeTags(goquery string, e *colly.HTMLElement) {
-	e.ForEach(goquery, func(_ int, a *colly.HTMLElement) {
-		a.DOM.Remove()
-	})
-}
-
-func scrapMain(c *colly.Collector) {
-	c.OnHTML("div.a-card__header-left", func(e *colly.HTMLElement) {
-		link := e.ChildAttrs("a[href].a-card__title", "href")
-
-		err := visitLink(c, krishaURL+link[0])
-		if err != nil {
-			return
-		}
-	})
-}
-func trimSpace(arg string) string {
-	return strings.TrimSpace(arg)
 }
