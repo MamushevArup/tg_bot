@@ -1,38 +1,39 @@
 package scrap
 
 import (
-	"fmt"
 	"github.com/MamushevArup/krisha-scraper/models"
-	"github.com/MamushevArup/krisha-scraper/utils"
 	"github.com/gocolly/colly"
 	"log"
 	"time"
 )
 
-const krishaURL = "https://krisha.kz"
-
-func NewScrap() string {
-	c := colly.NewCollector()
-	houses := scrapSubPage(c)
-	scrapMain(c)
-	err := visitLink(c, krishaURL+"/prodazha/kvartiry/")
-	if err != nil {
-		return ""
-	}
-	housesJSON, err := utils.ConvertToJSON(houses)
-	if err != nil {
-		log.Fatal("Cannot convert to the json")
-		return ""
-	}
-	fmt.Print(housesJSON)
-	return housesJSON
+type Krisha struct {
+	Colly *colly.Collector
+	Link  string
 }
 
-func scrapSubPage(c *colly.Collector) *[]models.House {
+const krishaURL = "https://krisha.kz"
+
+func New(c *colly.Collector, link string) *Krisha {
+	return &Krisha{Colly: c, Link: link}
+}
+
+func (k *Krisha) NewScrap() *[]models.House {
+	houses := k.scrapSubPage()
+	k.scrapMain()
+	err := k.visitLink(krishaURL + "/prodazha/kvartiry/")
+	if err != nil {
+		return houses
+	}
+
+	return houses
+}
+
+func (k *Krisha) scrapSubPage() *[]models.House {
 	houses := make([]models.House, 0)
-	c.OnHTML("div.layout__content", func(e *colly.HTMLElement) {
+	k.Colly.OnHTML("div.layout__content", func(e *colly.HTMLElement) {
 		hmap := make(map[string]string)
-		removeTags("a.btm-map", e)
+		removeTags(e, "a.btm-map")
 		titles := loopDiv(e, "div.offer__info-title")
 		keys := loopDiv(e, "div.offer__advert-short-info")
 		price := text(e, "div.offer__price, p.offer__price")
@@ -53,7 +54,7 @@ func scrapSubPage(c *colly.Collector) *[]models.House {
 			City:               trimSpace(hmap["Город"]),
 			HouseType:          trimSpace(hmap["Тип дома"]),
 			ResidentialComplex: trimSpace(hmap["Жилой комплекс"]),
-			YearOfBuild:        uint16(yearofbuild),
+			YearOfBuild:        yearofbuild,
 			Floor:              trimSpace(hmap["Этаж"]),
 			Area:               trimSpace(hmap["Площадь, м²"]),
 			Bathroom:           trimSpace(hmap["Санузел"]),
