@@ -3,6 +3,7 @@ package handlers
 import (
 	"github.com/MamushevArup/krisha-scraper/models"
 	"github.com/MamushevArup/krisha-scraper/telegram/inline"
+	"github.com/MamushevArup/krisha-scraper/utils/files"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"log"
 )
@@ -34,9 +35,17 @@ func handleCommand(msg *tgbotapi.MessageConfig, update *tgbotapi.Update) {
 	case "start":
 		msg.Text = "Рад видеть тебя здесь.\nДля начала тебе нужно выбрать следущее"
 		msg.ReplyMarkup = inline.BuyOrRent()
+	case "help":
+		val, err := files.ReadTXT("utils/texts/text.txt")
+		if err != nil {
+			log.Println("Error with something", err)
+		}
+		msg.Text = val
 	case "city":
 		val := update.Message.CommandArguments()
 		msg.Text = "You are choose the city" + val
+	case "run":
+
 	}
 }
 
