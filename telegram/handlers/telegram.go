@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"github.com/MamushevArup/krisha-scraper/krisha/scrap"
 	"github.com/MamushevArup/krisha-scraper/models"
 	"github.com/MamushevArup/krisha-scraper/telegram/inline"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -10,11 +9,10 @@ import (
 
 type Bot struct {
 	bot *tgbotapi.BotAPI
-	c   *scrap.Krisha
 }
 
-func NewBot(b *tgbotapi.BotAPI, initKrisha *scrap.Krisha) *Bot {
-	return &Bot{bot: b, c: initKrisha}
+func NewBot(b *tgbotapi.BotAPI) *Bot {
+	return &Bot{bot: b}
 }
 
 func (b *Bot) Start() {
