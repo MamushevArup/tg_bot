@@ -1,6 +1,8 @@
 package utils
 
-import json2 "encoding/json"
+import (
+	json2 "encoding/json"
+)
 
 func ConvertToJSON(value any) (string, error) {
 	json, err := json2.Marshal(value)

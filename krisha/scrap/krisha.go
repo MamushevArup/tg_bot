@@ -1,6 +1,7 @@
 package scrap
 
 import (
+	"fmt"
 	"github.com/MamushevArup/krisha-scraper/models"
 	"github.com/gocolly/colly"
 	"log"
@@ -8,8 +9,8 @@ import (
 )
 
 type Krisha struct {
-	Colly  *colly.Collector
-	Filter *models.Filter
+	Colly *colly.Collector
+	User  *models.User
 }
 
 /*
@@ -29,19 +30,45 @@ floor in the house from ?das[house.floor_num][from]={v} to das[house.floor_num][
 total area from das[live.square][from]={v} to das[live.square][to]={v}
 area kitchen from das[live.square_k][from]={v} to das[live.square_k][to]={v}
 */
+
+//func mapUrls() {
+//	urls := map[string]string{
+//		"city" : "/",
+//		"rooms" : "das[live.rooms][]=",
+//
+//	}
+//}
+
 const krishaURL = "https://krisha.kz"
 
-func New(c *colly.Collector, filter *models.Filter) *Krisha {
-	return &Krisha{Colly: c, Filter: filter}
+func New(c *colly.Collector, user *models.User) *Krisha {
+	return &Krisha{Colly: c, User: user}
 }
 
-func (k *Krisha) NewScrap() *[]models.House {
+func (k *Krisha) NewScrap() (*[]models.House, error) {
 	houses := k.scrapSubPage()
+	seen := make(map[string]bool)
+	fmt.Println(seen, "Before")
+	removeDuplicates(houses, seen)
+	fmt.Println(seen, "After")
 	k.scrapMain()
-	err := k.visitLink(krishaURL + k.Filter.BuyOrRent + k.Filter.TypeItem)
+	fmt.Println(houses)
+	err := k.visitLink(krishaURL + "/prodazha/kvartiry/almaty")
 	if err != nil {
-		return houses
+		return nil, err
 	}
+	return houses, nil
+}
+
+func removeDuplicates(houses *[]models.House, seen map[string]bool) *[]models.House {
+	result := (*houses)[:0] // Create a new slice with the same underlying array
+	for _, house := range *houses {
+		if !seen[house.Link] {
+			seen[house.Link] = true
+			result = append(result, house)
+		}
+	}
+	*houses = result // Update the original array with the unique houses
 	return houses
 }
 
@@ -60,7 +87,7 @@ func (k *Krisha) scrapSubPage() *[]models.House {
 		pr, err := parseInt(price)
 		yearofbuild, err := parseInt(hmap["Год постройки"])
 		if err != nil {
-			log.Fatal("Cannot convert the string to the int", err)
+			log.Fatal("Cannot convert the string to the int ", err, hmap["Год постройки"])
 		}
 
 		house := &models.House{

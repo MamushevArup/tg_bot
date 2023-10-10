@@ -25,3 +25,17 @@ func TypeItem() tgbotapi.InlineKeyboardMarkup {
 	)
 	return numericKeyboard
 }
+
+func ChooseCity() tgbotapi.InlineKeyboardMarkup {
+	var key = tgbotapi.NewInlineKeyboardMarkup(
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("Алматы", "almaty"),
+			tgbotapi.NewInlineKeyboardButtonData("Астана", "astana"),
+		),
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("Шымкент", "shymkent"),
+			tgbotapi.NewInlineKeyboardButtonData("Актау", "aktau"),
+		),
+	)
+	return key
+}

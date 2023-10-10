@@ -26,9 +26,10 @@ func (b *Bot) Start() {
 	updates := b.bot.GetUpdatesChan(u)
 
 	sentSecondInlineKeyboard := make(map[int64]bool)
-	filter := new(models.Filter)
+	cityCheck := make(map[int64]bool)
+	user := new(models.User)
 	for update := range updates {
-		b.HandleUpdate(&update, filter, sentSecondInlineKeyboard)
+		b.HandleUpdate(&update, user, sentSecondInlineKeyboard, cityCheck)
 	}
 }
 
@@ -36,4 +37,5 @@ func (b *Bot) sendSecondInlineKeyboard(chatID int64) {
 	msg := tgbotapi.NewMessage(chatID, "Теперь выбери один из этих вариантов")
 	msg.ReplyMarkup = inline.TypeItem()
 	b.sendMessage(&msg)
+
 }

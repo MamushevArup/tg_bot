@@ -34,7 +34,7 @@ func parseInt(priceStr string) (int, error) {
 func (k *Krisha) visitLink(url string) error {
 	err := k.Colly.Visit(url)
 	if err != nil {
-		log.Fatal("Error while parsing this link", url)
+		log.Fatal("Error while parsing this link ", url, err.Error())
 		return err
 	}
 	return nil
@@ -52,6 +52,7 @@ func (k *Krisha) scrapMain() {
 
 		err := k.visitLink(krishaURL + link[0])
 		if err != nil {
+			log.Println("Error is appear here also scrap/utils package")
 			return
 		}
 	})
