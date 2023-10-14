@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/MamushevArup/krisha-scraper/database/postgres"
 	"github.com/MamushevArup/krisha-scraper/models"
 	"github.com/MamushevArup/krisha-scraper/telegram/inline"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -15,7 +16,7 @@ func NewBot(b *tgbotapi.BotAPI) *Bot {
 	return &Bot{bot: b}
 }
 
-func (b *Bot) Start() {
+func (b *Bot) Start(db *postgres.Sql) {
 	log.Println("Start the application")
 	b.bot.Debug = true
 	log.Printf("Authorized on account %s", b.bot.Self.UserName)
@@ -29,7 +30,7 @@ func (b *Bot) Start() {
 	cityCheck := make(map[int64]bool)
 	user := new(models.User)
 	for update := range updates {
-		b.HandleUpdate(&update, user, sentSecondInlineKeyboard, cityCheck)
+		b.HandleUpdate(&update, user, sentSecondInlineKeyboard, cityCheck, db)
 	}
 }
 

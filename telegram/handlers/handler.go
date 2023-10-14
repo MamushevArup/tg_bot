@@ -1,10 +1,13 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/MamushevArup/krisha-scraper/database/postgres"
 	"github.com/MamushevArup/krisha-scraper/krisha/scrap"
 	"github.com/MamushevArup/krisha-scraper/models"
 	"github.com/MamushevArup/krisha-scraper/telegram/inline"
+	"github.com/MamushevArup/krisha-scraper/utils"
 	"github.com/MamushevArup/krisha-scraper/utils/files"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/gocolly/colly"
@@ -14,11 +17,11 @@ import (
 	"time"
 )
 
-func (b *Bot) HandleUpdate(update *tgbotapi.Update, user *models.User, sentSecondInlineKeyboard, cityChecker map[int64]bool) {
+func (b *Bot) HandleUpdate(update *tgbotapi.Update, user *models.User, sentSecondInlineKeyboard, cityChecker map[int64]bool, db *postgres.Sql) {
 	if update.Message != nil {
 		log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
 		if update.Message.IsCommand() {
-			b.handleMessageCommand(update, user, cityChecker)
+			b.handleMessageCommand(update, user, cityChecker, db)
 		}
 		user.Username = update.Message.Chat.UserName
 	} else if update.CallbackQuery != nil {
@@ -27,27 +30,26 @@ func (b *Bot) HandleUpdate(update *tgbotapi.Update, user *models.User, sentSecon
 	fmt.Println(user)
 }
 
-func (b *Bot) handleMessageCommand(update *tgbotapi.Update, user *models.User, cityChecker map[int64]bool) {
+func (b *Bot) handleMessageCommand(update *tgbotapi.Update, user *models.User, cityChecker map[int64]bool, db *postgres.Sql) {
 
 	if update.Message != nil { // If we got a message
 		log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
 		if update.Message.IsCommand() {
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "")
-			b.handleCommand(&msg, update, user, cityChecker)
+			b.handleCommand(&msg, update, user, cityChecker, db)
 			b.sendMessage(&msg)
 		}
 	}
 }
 
-func (b *Bot) handleCommand(msg *tgbotapi.MessageConfig, update *tgbotapi.Update, user *models.User, cityChecker map[int64]bool) {
+func (b *Bot) handleCommand(msg *tgbotapi.MessageConfig, update *tgbotapi.Update, user *models.User, cityChecker map[int64]bool, db *postgres.Sql) {
 	//chatid := update.Message.Chat.ID
 	command := update.Message.Command()
 	stopTicker := make(chan struct{})
 	switch command {
 	case "start":
-		msg.Text = "Рад видеть тебя здесь.\nДля начала тебе нужно выбрать следущее"
+		msg.Text = "Рад видеть тебя здесь.\nДля начала тебе нужно выбрать следущее\nПосле этого ознакомьтесь с документацие по команде /help"
 		msg.ReplyMarkup = inline.BuyOrRent()
-		msg.Text = "Отлично теперь прочитайте гид по команде /help "
 	case "help":
 		val, err := files.ReadTXT("utils/texts/text.txt")
 		if err != nil {
@@ -57,9 +59,10 @@ func (b *Bot) handleCommand(msg *tgbotapi.MessageConfig, update *tgbotapi.Update
 	case "city":
 		val := update.Message.CommandArguments()
 		flag := false
-		for _, s := range listCities() {
-			if s == val {
+		for k, v := range listCities() {
+			if k == val {
 				flag = true
+				val = v
 			}
 		}
 		if !flag {
@@ -77,8 +80,10 @@ func (b *Bot) handleCommand(msg *tgbotapi.MessageConfig, update *tgbotapi.Update
 					msg.Text = "Возможно вы ввели в неправильном формате"
 					return
 				}
+			} else {
+				s = "5.100"
 			}
-			s = "5.100"
+
 		}
 		user.UserChoice.Rooms = arrOfRooms
 		msg.Text = "Отлично!\nТеперь вы можете запустить поиск командой /run или продолжите настройку\nДоступные команды доступны /help"
@@ -140,7 +145,7 @@ func (b *Bot) handleCommand(msg *tgbotapi.MessageConfig, update *tgbotapi.Update
 			msg.Text = "Кажется вы ввели не подходящее число"
 			return
 		}
-		user.UserChoice.FloorFrom = uint8(floor)
+		user.UserChoice.FloorFrom = uint(floor)
 	case "floort":
 		val := update.Message.CommandArguments()
 		floor, err := strconv.ParseUint(val, 10, 32)
@@ -149,7 +154,7 @@ func (b *Bot) handleCommand(msg *tgbotapi.MessageConfig, update *tgbotapi.Update
 			msg.Text = "Кажется вы ввели не подходящее число"
 			return
 		}
-		user.UserChoice.FloorTo = uint8(floor)
+		user.UserChoice.FloorTo = uint(floor)
 	case "checknf":
 		user.UserChoice.CheckboxNotFirstFloor = true
 	case "checknl":
@@ -168,7 +173,7 @@ func (b *Bot) handleCommand(msg *tgbotapi.MessageConfig, update *tgbotapi.Update
 			msg.Text = "Кажется вы ввели не подходящее число"
 			return
 		}
-		user.UserChoice.FloorInTheHouseFrom = uint8(floor)
+		user.UserChoice.FloorInTheHouseFrom = uint(floor)
 	case "floorht":
 		val := update.Message.CommandArguments()
 		floor, err := strconv.ParseUint(val, 10, 32)
@@ -177,7 +182,7 @@ func (b *Bot) handleCommand(msg *tgbotapi.MessageConfig, update *tgbotapi.Update
 			msg.Text = "Кажется вы ввели не подходящее число"
 			return
 		}
-		user.UserChoice.FloorInTheHouseTo = uint8(floor)
+		user.UserChoice.FloorInTheHouseTo = uint(floor)
 	case "areaf":
 		val := update.Message.CommandArguments()
 		user.UserChoice.AreaFrom = val
@@ -193,10 +198,11 @@ func (b *Bot) handleCommand(msg *tgbotapi.MessageConfig, update *tgbotapi.Update
 	case "run":
 		// Here I need to implement the logic of taking data from the database for the user and
 		// check is he/she fill the data that is required by a start command. Do it later
-		// if filter.TypeItem == "" && filter.BuyOrRent == "" {
-		//	msg.Text = "Пожалуйста заполните необходимую информацию по команде /start"
-		//	return
-		//}
+		if user.TypeItem == "" && user.BuyOrRent == "" {
+			msg.Text = "Пожалуйста заполните необходимую информацию по команде /start"
+			return
+		}
+		db.GetUser(user)
 		c := colly.NewCollector(
 			colly.AllowURLRevisit(),
 		)
@@ -216,22 +222,22 @@ func (b *Bot) handleCommand(msg *tgbotapi.MessageConfig, update *tgbotapi.Update
 					}
 					msg2 := tgbotapi.NewMessage(update.Message.Chat.ID, "Success")
 					b.sendMessage(&msg2)
-					//for _, house := range *houses {
-					//	val, err := utils.ConvertToJSON(house)
-					//	fieldOrder := sliceOrder()
-					//	var hmap map[string]interface{}
-					//
-					//	if err != nil {
-					//		log.Println("Cannot convert one element to the json ", err.Error())
-					//	}
-					//	if err = json.Unmarshal([]byte(val), &hmap); err != nil {
-					//		log.Println("Error with converting json to the map")
-					//	}
-					//	output := orderOutput(fieldOrder, hmap)
-					//
-					//	msg2 := tgbotapi.NewMessage(update.Message.Chat.ID, output)
-					//	b.sendMessage(&msg2)
-					//}
+					for _, house := range *houses {
+						val, err := utils.ConvertToJSON(house)
+						fieldOrder := sliceOrder()
+						var hmap map[string]interface{}
+
+						if err != nil {
+							log.Println("Cannot convert one element to the json ", err.Error())
+						}
+						if err = json.Unmarshal([]byte(val), &hmap); err != nil {
+							log.Println("Error with converting json to the map")
+						}
+						output := orderOutput(fieldOrder, hmap)
+
+						msg2 := tgbotapi.NewMessage(update.Message.Chat.ID, output)
+						b.sendMessage(&msg2)
+					}
 				}
 			case <-stopTicker:
 				ticker.Stop()
@@ -289,8 +295,8 @@ func (b *Bot) handleCallbackQuery(update *tgbotapi.Update, user *models.User, se
 func (b *Bot) sendMessage(msg *tgbotapi.MessageConfig) {
 	b.bot.Send(msg)
 }
-func listCities() []string {
-	return []string{"Алматы", "Астана", "Шымкент", "Актау", "Кызылорда"}
+func listCities() map[string]string {
+	return map[string]string{"Алматы": "almaty", "Астана": "astana", "Шымкент": "shymkent", "Актау": "aktau"}
 }
 func trimAllSpaces(s string) (uint64, error) {
 	var val string

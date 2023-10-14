@@ -14,15 +14,15 @@ type UserChoice struct {
 	YearOfBuiltTo         uint     `json:"year_of_built_to,omitempty"`
 	PriceFrom             uint64   `json:"price_from,omitempty"`
 	PriceTo               uint64   `json:"price_to,omitempty"`
-	FloorFrom             uint8    `json:"floor_from,omitempty"`
-	FloorTo               uint8    `json:"floor_to,omitempty"`
+	FloorFrom             uint     `json:"floor_from,omitempty"`
+	FloorTo               uint     `json:"floor_to,omitempty"`
 	CheckboxNotFirstFloor bool     `json:"checkbox_not_first_floor,omitempty"`
 	CheckboxNotLastFloor  bool     `json:"checkbox_not_last_floor,omitempty"`
-	CheckboxFromOwner     bool     `json:"checkbot_from_owner,omitempty"`
+	CheckboxFromOwner     bool     `json:"checkbox_from_owner,omitempty"`
 	CheckboxNewBuilding   bool     `json:"checkbox_new_building,omitempty"`
 	CheckRealEstate       bool     `json:"check_real_estate,omitempty"`
-	FloorInTheHouseFrom   uint8    `json:"floor_in_the_house_from,omitempty"`
-	FloorInTheHouseTo     uint8    `json:"floor_in_the_house_to,omitempty"`
+	FloorInTheHouseFrom   uint     `json:"floor_in_the_house_from,omitempty"`
+	FloorInTheHouseTo     uint     `json:"floor_in_the_house_to,omitempty"`
 	AreaFrom              string   `json:"total_area,omitempty"`
 	AreaTo                string   `json:"area_to,omitempty"`
 	KitchenAreaFrom       string   `json:"kitchen_area,omitempty"`
