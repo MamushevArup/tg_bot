@@ -35,8 +35,7 @@ func (b *Bot) Start(db *postgres.Sql) {
 }
 
 func (b *Bot) sendSecondInlineKeyboard(chatID int64) {
-	msg := tgbotapi.NewMessage(chatID, "Теперь выбери один из этих вариантов")
+	msg := tgbotapi.NewMessage(chatID, "Отлично теперь выбери одно из следущих")
 	msg.ReplyMarkup = inline.TypeItem()
 	b.sendMessage(&msg)
-
 }

@@ -26,7 +26,13 @@ func (s *Sql) GetUser(user *models.User) {
 	} else {
 		s.updateUser(user)
 	}
-	defer s.Db.Close()
+}
+
+func (s *Sql) CheckForStart(user *models.User) (string, string) {
+	query := `select buyOrRent, typeItem from users where username = $1`
+	var buy, typeI string
+	_ = s.Db.QueryRow(query, user.Username).Scan(&buy, &typeI)
+	return buy, typeI
 }
 
 func (s *Sql) insertUser(user *models.User) {

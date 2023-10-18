@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/MamushevArup/krisha-scraper/database/postgres"
 	"github.com/MamushevArup/krisha-scraper/telegram/handlers"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -16,12 +15,8 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 	db := postgres.NewDB()
-	if err != nil {
-		log.Fatal("Cannot connect to the db because of this ", err.Error())
-	}
 	tgToken := os.Getenv("TELEGRAM_BOT_TOKEN")
 	bot, err := tgbotapi.NewBotAPI(tgToken)
-	fmt.Println(bot)
 	if err != nil {
 		log.Panic(err)
 	}

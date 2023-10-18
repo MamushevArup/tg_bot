@@ -1,7 +1,6 @@
 package scrap
 
 import (
-	"fmt"
 	"github.com/MamushevArup/krisha-scraper/models"
 	"github.com/gocolly/colly"
 	"log"
@@ -15,45 +14,6 @@ type Krisha struct {
 	User  *models.User
 }
 
-/*
-	elements := []string{
-		"username",
-		"buy_or_rent",
-		"type_item",
-		"city",
-		"rooms",
-		"type_house",
-		"year_of_built_from",
-		"year_of_built_to",
-		"price_from",
-		"price_to",
-		"floor_from",
-		"floor_to",
-		"checkbox_not_first_floor",
-		"checkbox_not_last_floor",
-		"checkbox_from_owner",
-		"checkbox_new_building",
-		"check_real_estate",
-		"floor_in_the_house_from",
-		"floor_in_the_house_to",
-	}
-
-url for krisha scrap
-order of it doesn't matter
-random number or zero is not applicable for this because of error
-продажа по комнатам ?das[live.rooms][]=0?das[live.rooms][]=1&?das[live.rooms][]=2&?das[live.rooms][]=3&?das[live.rooms][]=4&?das[live.rooms][]=5&?das[live.rooms][]=5.100&
-тип дома ?das[flat.building][]=i++ for every type
-yearOfBuilt from ?das[house.year][from]={value} to das[house.year][to]={value}
-price from ?das[price][from]={value} to das[price][to]={value}
-floor from ?das[flat][from]={value} to das[flat][to]={v}
-checkbox for not_first floor ?das[floor_not_first]=1 for not last das[floor_not_last]=1
-checkbox for от хозяев ?das[who]=1
-от новостроек das[novostroiki]=1
-от крыша агентов das[_sys.fromAgent]=1
-floor in the house from ?das[house.floor_num][from]={v} to das[house.floor_num][to]={v}
-total area from das[live.square][from]={v} to das[live.square][to]={v}
-area kitchen from das[live.square_k][from]={v} to das[live.square_k][to]={v}
-*/
 func (k *Krisha) mapUrls() string {
 	var url strings.Builder
 	user := k.User.UserChoice
@@ -144,32 +104,33 @@ func New(c *colly.Collector, user *models.User) *Krisha {
 	return &Krisha{Colly: c, User: user}
 }
 
-func (k *Krisha) NewScrap() (*[]models.House, error) {
+func (k *Krisha) NewScrap(dups []models.House) (*[]models.House, error) {
 	houses := k.scrapSubPage()
-	seen := make(map[string]bool)
-	fmt.Println(seen, "Before")
-	removeDuplicates(houses, seen)
-	fmt.Println(seen, "After")
+
 	k.scrapMain()
-	fmt.Println(houses)
 	url := k.mapUrls()
-	fmt.Println(url + "++++++++++++++++++++++++++++++++++++")
 	err := k.visitLink(krishaURL + url)
 	if err != nil {
 		return nil, err
 	}
+	removeDuplicates(houses, dups)
 	return houses, nil
 }
 
-func removeDuplicates(houses *[]models.House, seen map[string]bool) *[]models.House {
-	result := (*houses)[:0] // Create a new slice with the same underlying array
-	for _, house := range *houses {
-		if !seen[house.Link] {
-			seen[house.Link] = true
-			result = append(result, house)
+func removeDuplicates(houses *[]models.House, dups []models.House) *[]models.House {
+	inter := make([]models.House, len(*houses))
+	copy(inter, *houses)
+	for i := len(*houses) - 1; i >= 0; i-- {
+		h := (*houses)[i]
+		for _, d := range dups {
+			if h.Link == d.Link {
+				(*houses)[i], (*houses)[len(*houses)-1] = (*houses)[len(*houses)-1], (*houses)[i]
+				*houses = (*houses)[:len(*houses)-1]
+			}
 		}
 	}
-	*houses = result // Update the original array with the unique houses
+	copy(dups, inter)
+	inter = nil
 	return houses
 }
 
