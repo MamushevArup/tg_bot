@@ -8,238 +8,246 @@ import (
 	uuid2 "github.com/google/uuid"
 	"github.com/lib/pq"
 	"log"
-	"strconv"
-	"strings"
 )
 
-func (s *Sql) GetUser(user *models.User) {
-	query := `select id, username from users where username = $1`
+func (s *Sql) userExist(username *models.User) (uuid2.UUID, error) {
+	query := `select id from users where username = $1`
 	var id uuid2.UUID
-	var username string
-	err := s.Db.QueryRow(query, user.Username).Scan(&id, &username)
+	err := s.Db.QueryRow(query, username.Username).Scan(&id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			s.insertUser(user)
+			// user does not exist so it returns zero id.
+			return id, err
 		} else {
-			log.Fatal("Cannot get some info error is ", err)
+			log.Fatal("Cannot get info in the userExist method ", err)
 		}
-	} else {
-		s.updateUser(user)
 	}
+	// user exist and returns id
+	return id, nil
 }
 
-func (s *Sql) CheckForStart(user *models.User) (string, string) {
-	query := `select buyOrRent, typeItem from users where username = $1`
-	var buy, typeI string
-	_ = s.Db.QueryRow(query, user.Username).Scan(&buy, &typeI)
-	return buy, typeI
+func (s *Sql) IntroDataStartCommand(user *models.User) {
+	uid, err := s.userExist(user)
+	if err != nil {
+		s.insertIntro(user)
+		return
+	}
+	s.id = uid
+	s.updateIntro(uid, user)
 }
 
-func (s *Sql) insertUser(user *models.User) {
+func (s *Sql) insertIntro(user *models.User) {
+	// if user do not exists
 	uuid := uuid2.New()
-	uuidFrom := uuid2.New()
-	uuidTo := uuid2.New()
-	uuidCheck := uuid2.New()
-	in := user.UserChoice
-
-	tn, err := s.Db.Begin()
+	s.id = uuid
+	query := `insert into users(id, username, buyOrRent, typeItem, city) values ($1, $2, $3, $4, $5)`
+	_, err := s.Db.Exec(query, uuid, user.Username, user.BuyOrRent, user.TypeItem, user.City)
 	if err != nil {
-		log.Println("Error with start a transaction", err)
-		return
+		log.Fatal("Error with inserting values to the user InsertIntro method ", err)
 	}
-
-	queryFrom := `insert into datafrom values 
-                         ($1, $2, $3, $4, $5, $6, $7 )`
-	_, err = tn.Exec(queryFrom, uuidFrom, in.YearOfBuiltFrom, in.PriceFrom,
-		in.FloorFrom, in.FloorInTheHouseFrom, in.AreaFrom, in.KitchenAreaFrom)
-	if err != nil {
-		tn.Rollback()
-		log.Println("Cannot insert to the datafrom table", err)
-	}
-	queryTo := `insert into datato values 
-                       ($1,$2,$3,$4,$5,$6,$7)`
-	_, err = tn.Exec(queryTo, uuidTo, in.YearOfBuiltTo, in.PriceTo,
-		in.FloorTo, in.FloorInTheHouseTo, in.AreaTo, in.KitchenAreaTo)
-	if err != nil {
-		tn.Rollback()
-		log.Println("Cannot insert to the datato table", err)
-	}
-	queryCheck := `insert into checkbox values 
-                         ($1,$2,$3,$4,$5,$6)`
-	_, err = tn.Exec(queryCheck, uuidCheck, in.CheckboxNotFirstFloor,
-		in.CheckboxNotLastFloor, in.CheckboxFromOwner, in.CheckboxNewBuilding,
-		in.CheckRealEstate)
-	if err != nil {
-		log.Println("Cannot insert to the check table", err)
-	}
-	query := ` insert into users values 
-	                      ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
-	_, err = tn.Exec(query, uuid, user.Username, in.BuyOrRent, in.TypeItem,
-		in.City, pq.Array(in.Rooms), pq.Array(in.TypeHouse), uuidFrom, uuidTo, uuidCheck)
-	if err != nil {
-		tn.Rollback()
-		log.Println("Cannot insert to the users table", err)
-
-	}
-	err = tn.Commit()
-	if err != nil {
-		log.Println("Cannot confirm a commit command", err)
-		return
-	}
-	fmt.Println("Succesfully end")
 }
 
-func (s *Sql) updateUser(user *models.User) error {
-	var err error
-	query, param := s.updateUsersTableQuery(user)
-	queryFrom, paramFrom := s.updateDataFromTable(user)
-	queryTo, paramsTo := s.updateDataToTable(user)
-	queryCheck, paramsCheck := s.updateCheckTable(user)
-	tn, err := s.Db.Begin()
+func (s *Sql) updateIntro(id uuid2.UUID, users *models.User) {
+	query := `update users set buyOrRent = $2, typeItem = $3, city = $4 where id = $1`
+	_, err := s.Db.Exec(query, id, users.BuyOrRent, users.TypeItem, users.City)
 	if err != nil {
-		log.Println("Error with start a transaction ", err)
-		return err
+		log.Println("Error cannot update in t"+
+			"he updateInto method ", err)
 	}
-	execTransaction(query, param, tn, "users")
-	execTransaction(queryFrom, paramFrom, tn, "dataFrom")
-	execTransaction(queryTo, paramsTo, tn, "dataTo")
-	execTransaction(queryCheck, paramsCheck, tn, "checkbox")
+}
 
-	err = tn.Commit()
+func (s *Sql) UpdateCity(city string) error {
+	query := `update users set city = $2 where id = $1`
+	_, err := s.Db.Exec(query, s.id, city)
 	if err != nil {
-		log.Println("Cannot confirm that commit is happen ", err)
+		log.Println("Cannot update city in the UpdateCity method ", err)
 		return err
 	}
 	return nil
 }
-func execTransaction(query string, param []interface{}, tn *sql.Tx, tableName string) {
-	_, err := tn.Exec(query, param...)
+
+func (s *Sql) UpdateRooms(rooms []string) error {
+	query := `update users set rooms = $2 where id = $1`
+	_, err := s.Db.Exec(query, s.id, pq.Array(rooms))
 	if err != nil {
-		tn.Rollback()
-		log.Printf("Error with updating %v table %s", tableName, err)
-		return
+		log.Println("Cannot update rooms in the UpdateRooms method ", err)
+		return err
 	}
+	return nil
 }
 
-func (s *Sql) updateUsersTableQuery(user *models.User) (string, []interface{}) {
-	hmap := map[string]interface{}{
-		"buyOrRent": user.BuyOrRent,
-		"typeItem":  user.TypeItem,
-		"city":      user.City,
-		"rooms":     pq.StringArray(user.Rooms),
-		"typeHouse": pq.StringArray(user.TypeHouse),
+func (s *Sql) UpdateType(types []string) error {
+	query := `update users set typeHouse = $2 where id = $1`
+	_, err := s.Db.Exec(query, s.id, pq.Array(types))
+	if err != nil {
+		log.Println("Cannot update type in the UpdateType method ", err)
+		return err
 	}
-
-	var query strings.Builder
-	var params []interface{}
-	params = append(params, user.Username)
-
-	for column, value := range hmap {
-		if value != nil {
-			if arr, ok := value.(pq.StringArray); ok {
-				query.WriteString(column + " = $" + strconv.Itoa(len(params)+1) + ", ")
-				params = append(params, arr)
-			} else if strValue, _ := value.(string); strValue != "" {
-				query.WriteString(column + " = $" + strconv.Itoa(len(params)+1) + ", ")
-				params = append(params, strValue)
-			}
-		}
-	}
-	queryString := strings.TrimSuffix(query.String(), ", ")
-	finalQuery := "UPDATE users SET " + queryString + " WHERE username = $1"
-	return finalQuery, params
-}
-func (s *Sql) updateDataFromTable(user *models.User) (string, []interface{}) {
-	hmap := map[string]interface{}{
-		"yearBuiltFrom":       user.YearOfBuiltFrom,
-		"priceFrom":           user.PriceFrom,
-		"floorFrom":           user.FloorFrom,
-		"floorInTheHouseFrom": user.FloorInTheHouseFrom,
-		"areaFrom":            user.AreaFrom,
-		"kitchenFrom":         user.KitchenAreaFrom,
-	}
-	var query strings.Builder
-	var params []interface{}
-	params = append(params, user.Username)
-	for k, v := range hmap {
-		switch val := v.(type) {
-		// uint8 uint64 string
-		case uint:
-			if val != 0 {
-				query.WriteString(k + "=$" + strconv.Itoa(len(params)+1) + ", ")
-				params = append(params, val)
-			}
-		case uint64:
-			if val != 0 {
-				query.WriteString(k + "=$" + strconv.Itoa(len(params)+1) + ", ")
-				params = append(params, val)
-			}
-		case string:
-			if val != "" {
-				query.WriteString(k + "=$" + strconv.Itoa(len(params)+1) + ", ")
-				params = append(params, val)
-			}
-		}
-	}
-	queryString := strings.TrimSuffix(query.String(), ", ")
-	finalQuery := "UPDATE datafrom SET " + queryString + " WHERE id = (select idFrom from users where username = $1)"
-	return finalQuery, params
-}
-func (s *Sql) updateDataToTable(user *models.User) (string, []interface{}) {
-	hmap := map[string]interface{}{
-		"yearBuiltTo":       user.YearOfBuiltTo,
-		"priceTo":           user.PriceTo,
-		"floorTo":           user.FloorTo,
-		"floorInTheHouseTo": user.FloorInTheHouseTo,
-		"areaTo":            user.AreaTo,
-		"kitchenTo":         user.KitchenAreaTo,
-	}
-	var query strings.Builder
-	var params []interface{}
-	params = append(params, user.Username)
-	for k, v := range hmap {
-		switch val := v.(type) {
-		// uint8 uint64 string
-		case uint:
-			if val != 0 {
-				query.WriteString(k + "=$" + strconv.Itoa(len(params)+1) + ", ")
-				params = append(params, val)
-			}
-		case uint64:
-			if val != 0 {
-				query.WriteString(k + "=$" + strconv.Itoa(len(params)+1) + ", ")
-				params = append(params, val)
-			}
-		case string:
-			if val != "" {
-				query.WriteString(k + "=$" + strconv.Itoa(len(params)+1) + ", ")
-				params = append(params, val)
-			}
-		}
-	}
-	queryString := strings.TrimSuffix(query.String(), ", ")
-	finalQuery := "UPDATE datato SET " + queryString + " WHERE id = (select idTo from users where username = $1)"
-	return finalQuery, params
+	return nil
 }
 
-func (s *Sql) updateCheckTable(user *models.User) (string, []interface{}) {
-	hmap := map[string]interface{}{
-		"notFirstFloor": user.CheckboxNotFirstFloor,
-		"notLastFloor":  user.CheckboxNotLastFloor,
-		"fromOwner":     user.CheckboxFromOwner,
-		"newBuilding":   user.CheckboxNewBuilding,
-		"realEstate":    user.CheckRealEstate,
+func (s *Sql) UpdateBuiltFrom(year uint) error {
+	query := `update users set yearBuiltFrom = $2 where id = $1`
+	_, err := s.Db.Exec(query, s.id, year)
+	if err != nil {
+		log.Println("Cannot update builtFrom in the UpdateBuiltFrom method ", err)
+		return err
 	}
-	var query strings.Builder
-	var params []interface{}
-	params = append(params, user.Username)
-	for k, v := range hmap {
-		if v.(bool) {
-			query.WriteString(k + "=$" + strconv.Itoa(len(params)+1) + ", ")
-			params = append(params, v)
-		}
+	return nil
+}
+
+func (s *Sql) UpdateBuiltTo(year uint) error {
+	query := `update users set yearBuiltTo = $2 where id = $1`
+	_, err := s.Db.Exec(query, s.id, year)
+	if err != nil {
+		log.Println("Cannot update builtTo in the UpdateBuiltTo method ", err)
+		return err
 	}
-	queryString := strings.TrimSuffix(query.String(), ", ")
-	finalQuery := "UPDATE checkbox SET " + queryString + " WHERE id = (select idCheck from users where username = $1)"
-	return finalQuery, params
+	return nil
+}
+
+func (s *Sql) UpdatePriceFrom(price uint64) error {
+	query := `update users set priceFrom = $2 where id = $1`
+	fmt.Println(s.id)
+	_, err := s.Db.Exec(query, s.id, price)
+	if err != nil {
+		log.Println("Cannot update priceFrom in the UpdatePriceFrom method")
+		return err
+	}
+	return nil
+}
+func (s *Sql) UpdatePriceTo(price uint64) error {
+	query := `update users set priceTo = $2 where id = $1`
+	_, err := s.Db.Exec(query, s.id, price)
+	if err != nil {
+		log.Println("Cannot update priceTo in the UpdatePriceTo method")
+		return err
+	}
+	return nil
+}
+func (s *Sql) UpdateFloorFrom(floor uint64) error {
+	query := `update users set floorFrom = $2 where id = $1`
+	_, err := s.Db.Exec(query, s.id, floor)
+	if err != nil {
+		log.Println("Cannot update floorFrom in the UpdateFloorFrom method")
+		return err
+	}
+	return nil
+}
+func (s *Sql) UpdateFloorTo(floor uint64) error {
+	query := `update users set floorTo = $2 where id = $1`
+	_, err := s.Db.Exec(query, s.id, floor)
+	if err != nil {
+		log.Println("Cannot update floorTo in the UpdateFloorTo method")
+		return err
+	}
+	return nil
+}
+func (s *Sql) UpdateFloorInTheHouseFrom(floorHouse uint64) error {
+	query := `update users set floorInTheHouseFrom = $2 where id = $1`
+	_, err := s.Db.Exec(query, s.id, floorHouse)
+	if err != nil {
+		log.Println("Cannot update floorHouse in the UpdateFloorInTheHouseFrom method")
+		return err
+	}
+	return nil
+}
+func (s *Sql) UpdateFloorInTheHouseTo(floorHouse uint64) error {
+	query := `update users set floorInTheHouseTo = $2 where id = $1`
+	_, err := s.Db.Exec(query, s.id, floorHouse)
+	if err != nil {
+		log.Println("Cannot update floorHouse in the UpdateFloorInTheHouseTo method")
+		return err
+	}
+	return nil
+}
+func (s *Sql) UpdateAreaFrom(area string) error {
+	query := `update users set areaFrom = $2 where id = $1`
+	_, err := s.Db.Exec(query, s.id, area)
+	if err != nil {
+		log.Println("Cannot update area in the UpdateAreaFrom method")
+		return err
+	}
+	return nil
+}
+func (s *Sql) UpdateAreaTo(area string) error {
+	query := `update users set areaTo = $2 where id = $1`
+	_, err := s.Db.Exec(query, s.id, area)
+	if err != nil {
+		log.Println("Cannot update area in the UpdateAreaTo method")
+		return err
+	}
+	return nil
+}
+func (s *Sql) UpdateKitchenFrom(kitchen string) error {
+	query := `update users set kitchenFrom = $2 where id = $1`
+	_, err := s.Db.Exec(query, s.id, kitchen)
+	if err != nil {
+		log.Println("Cannot update kitchen in the UpdateKitchenFrom method")
+		return err
+	}
+	return nil
+}
+func (s *Sql) UpdateKitchenTo(kitchen string) error {
+	query := `update users set kitchenTo = $2 where id = $1`
+	_, err := s.Db.Exec(query, s.id, kitchen)
+	if err != nil {
+		log.Println("Cannot update kitchen in the UpdateKitchenTo method")
+		return err
+	}
+	return nil
+}
+func (s *Sql) UpdateNotFirstFloor(flag bool) error {
+	query := `update users set notFirstFloor = $2 where id = $1`
+	_, err := s.Db.Exec(query, s.id, flag)
+	if err != nil {
+		log.Println("Cannot update notFirstFloor in the UpdateNotFirstFloor method")
+		return err
+	}
+	return nil
+}
+func (s *Sql) UpdateNotLastFloor(flag bool) error {
+	query := `update users set notLastFloor = $2 where id = $1`
+	_, err := s.Db.Exec(query, s.id, flag)
+	if err != nil {
+		log.Println("Cannot update notLastFloor in the UpdateNotLastFloor method")
+		return err
+	}
+	return nil
+}
+func (s *Sql) UpdateFromOwner(flag bool) error {
+	query := `update users set fromOwner = $2 where id = $1`
+	_, err := s.Db.Exec(query, s.id, flag)
+	if err != nil {
+		log.Println("Cannot update fromOwner in the UpdateFromOwner method")
+		return err
+	}
+	return nil
+}
+func (s *Sql) UpdateNewBuilding(flag bool) error {
+	query := `update users set newBuilding = $2 where id = $1`
+	_, err := s.Db.Exec(query, s.id, flag)
+	if err != nil {
+		log.Println("Cannot update newBuilding in the UpdateNewBuilding method")
+		return err
+	}
+	return nil
+}
+func (s *Sql) UpdateRealEstate(flag bool) error {
+	query := `update users set realEstate = $2 where id = $1`
+	_, err := s.Db.Exec(query, s.id, flag)
+	if err != nil {
+		log.Println("Cannot update realEstate in the UpdateRealEstate method")
+		return err
+	}
+	return nil
+}
+func (s *Sql) GetAll() (*models.User, error) {
+	user := models.User{}
+	query := `select * from users where id = $1`
+	err := s.Db.Get(&user, query, s.id)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
 }

@@ -1,16 +1,19 @@
 package postgres
 
 import (
-	"database/sql"
 	"fmt"
-	_ "github.com/lib/pq"
+	"github.com/MamushevArup/krisha-scraper/models"
+	uuid2 "github.com/google/uuid"
+	"github.com/jmoiron/sqlx"
 	"log"
 	"os"
 	"sync"
 )
 
 type Sql struct {
-	Db *sql.DB
+	Db   *sqlx.DB
+	id   uuid2.UUID
+	User *models.User
 }
 
 var once sync.Once
@@ -31,7 +34,7 @@ func initializeDB() {
 
 	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", host, port, user, pwd, dbName)
 	var err error
-	db.Db, err = sql.Open("postgres", psqlInfo)
+	db.Db, err = sqlx.Open("postgres", psqlInfo)
 	if err != nil {
 		log.Fatal("Error with connect to the database:", err)
 	}

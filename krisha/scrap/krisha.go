@@ -1,6 +1,7 @@
 package scrap
 
 import (
+	"fmt"
 	"github.com/MamushevArup/krisha-scraper/models"
 	"github.com/gocolly/colly"
 	"log"
@@ -17,6 +18,7 @@ type Krisha struct {
 func (k *Krisha) mapUrls() string {
 	var url strings.Builder
 	user := k.User.UserChoice
+
 	if user.BuyOrRent != "" {
 		url.WriteString(user.BuyOrRent + "/")
 	}
@@ -36,65 +38,66 @@ func (k *Krisha) mapUrls() string {
 			url.WriteString("das[flat.building][]=" + s + "&")
 		}
 	}
-	if user.YearOfBuiltFrom != 0 {
-		val := strconv.FormatUint(uint64(user.YearOfBuiltFrom), 10)
+	if user.YearOfBuiltFrom != nil {
+		val := strconv.FormatUint(uint64(*user.YearOfBuiltFrom), 10)
 		url.WriteString("das[house.year][from]=" + val + "&")
 	}
-	if user.YearOfBuiltTo != 0 {
-		val := strconv.FormatUint(uint64(user.YearOfBuiltTo), 10)
+	if user.YearOfBuiltTo != nil {
+		val := strconv.FormatUint(uint64(*user.YearOfBuiltTo), 10)
 		url.WriteString("das[house.year][to]=" + val + "&")
 	}
-	if user.PriceFrom != 0 {
-		val := strconv.FormatUint(user.PriceFrom, 10)
+	if user.PriceFrom != nil {
+		val := strconv.FormatUint(*user.PriceFrom, 10)
 		url.WriteString("das[price][from]=" + val + "&")
 	}
-	if user.PriceTo != 0 {
-		val := strconv.FormatUint(user.PriceTo, 10)
+	if user.PriceTo != nil {
+		val := strconv.FormatUint(*user.PriceTo, 10)
 		url.WriteString("das[price][to]=" + val + "&")
 	}
-	if user.FloorFrom != 0 {
-		val := strconv.FormatUint(uint64(user.FloorFrom), 10)
+	if user.FloorFrom != nil {
+		val := strconv.FormatUint(uint64(*user.FloorFrom), 10)
 		url.WriteString("das[flat][from]=" + val + "&")
 	}
-	if user.FloorTo != 0 {
-		val := strconv.FormatUint(uint64(user.FloorTo), 10)
+	if user.FloorTo != nil {
+		val := strconv.FormatUint(uint64(*user.FloorTo), 10)
 		url.WriteString("das[flat][to]=" + val + "&")
 	}
-	if user.CheckboxNotFirstFloor {
+	if user.CheckboxNotFirstFloor != nil {
 		url.WriteString("das[floor_not_first]=1&")
 	}
-	if user.CheckboxNotLastFloor {
+	if user.CheckboxNotLastFloor != nil {
 		url.WriteString("das[floor_not_last]=1&")
 	}
-	if user.CheckboxFromOwner {
+	if user.CheckboxFromOwner != nil {
 		url.WriteString("das[who]=1&")
 	}
-	if user.CheckboxNewBuilding {
+	if user.CheckboxNewBuilding != nil {
 		url.WriteString("das[novostroiki]=1&")
 	}
-	if user.CheckRealEstate {
+	if user.CheckRealEstate != nil {
 		url.WriteString("das[_sys.fromAgent]=1&")
 	}
-	if user.FloorInTheHouseFrom != 0 {
-		val := strconv.FormatUint(uint64(user.FloorInTheHouseFrom), 10)
+	if user.FloorInTheHouseFrom != nil {
+		val := strconv.FormatUint(uint64(*user.FloorInTheHouseFrom), 10)
 		url.WriteString("das[house.floor_num][from]=" + val + "&")
 	}
-	if user.FloorInTheHouseTo != 0 {
-		val := strconv.FormatUint(uint64(user.FloorInTheHouseTo), 10)
+	if user.FloorInTheHouseTo != nil {
+		val := strconv.FormatUint(uint64(*user.FloorInTheHouseTo), 10)
 		url.WriteString("das[house.floor_num][to]=" + val + "&")
 	}
-	if user.AreaFrom != "" {
-		url.WriteString("das[live.square][from]=" + user.AreaFrom + "&")
+	if user.AreaFrom != nil {
+		url.WriteString("das[live.square][from]=" + *user.AreaFrom + "&")
 	}
-	if user.AreaTo != "" {
-		url.WriteString("das[live.square][to]=" + user.AreaTo + "&")
+	if user.AreaTo != nil {
+		url.WriteString("das[live.square][to]=" + *user.AreaTo + "&")
 	}
-	if user.KitchenAreaFrom != "" {
-		url.WriteString("das[live.square_k][from]=" + user.KitchenAreaFrom + "&")
+	if user.KitchenAreaFrom != nil {
+		url.WriteString("das[live.square_k][from]=" + *user.KitchenAreaFrom + "&")
 	}
-	if user.KitchenAreaTo != "" {
-		url.WriteString("das[live.square_k][to]=" + user.KitchenAreaTo + "&")
+	if user.KitchenAreaTo != nil {
+		url.WriteString("das[live.square_k][to]=" + *user.KitchenAreaTo + "&")
 	}
+	fmt.Println(url.String(), "URL IN THE MAP URL FUNCTION")
 	return url.String()
 }
 
@@ -124,18 +127,25 @@ func removeDuplicates(houses *[]models.House, dups []models.House) *[]models.Hou
 		h := (*houses)[i]
 		for _, d := range dups {
 			if h.Link == d.Link {
-				(*houses)[i], (*houses)[len(*houses)-1] = (*houses)[len(*houses)-1], (*houses)[i]
-				*houses = (*houses)[:len(*houses)-1]
+				if i < 0 || i >= len(*houses) {
+					break
+				}
+				*houses = append((*houses)[:i], (*houses)[i+1:]...)
+				fmt.Println("INSIDE THE REMOVE DUPS", len(*houses), len(dups), h.Link)
 			}
 		}
 	}
 	copy(dups, inter)
-	inter = nil
+	fmt.Println(len(*houses))
+	fmt.Println(len(inter))
+	fmt.Println(len(dups))
+	inter = []models.House{}
 	return houses
 }
 
 func (k *Krisha) scrapSubPage() *[]models.House {
 	houses := make([]models.House, 0)
+	time.Sleep(10 * time.Second)
 	k.Colly.OnHTML("div.layout__content", func(e *colly.HTMLElement) {
 		hmap := make(map[string]string)
 		removeTags(e, "a.btm-map")

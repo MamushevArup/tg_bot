@@ -26,12 +26,11 @@ func (b *Bot) Start(db *postgres.Sql) {
 
 	updates := b.bot.GetUpdatesChan(u)
 
-	sentSecondInlineKeyboard := make(map[int64]bool)
-	cityCheck := make(map[int64]bool)
 	user := new(models.User)
 	for update := range updates {
-		b.HandleUpdate(&update, user, sentSecondInlineKeyboard, cityCheck, db)
+		b.HandleUpdate(&update, user, db)
 	}
+
 }
 
 func (b *Bot) sendSecondInlineKeyboard(chatID int64) {

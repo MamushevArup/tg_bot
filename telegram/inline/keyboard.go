@@ -1,6 +1,8 @@
 package inline
 
-import tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+import (
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+)
 
 func BuyOrRent() tgbotapi.InlineKeyboardMarkup {
 	var keyboard = tgbotapi.NewInlineKeyboardMarkup(
@@ -25,7 +27,6 @@ func TypeItem() tgbotapi.InlineKeyboardMarkup {
 	)
 	return numericKeyboard
 }
-
 func ChooseCity() tgbotapi.InlineKeyboardMarkup {
 	var key = tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
@@ -38,4 +39,13 @@ func ChooseCity() tgbotapi.InlineKeyboardMarkup {
 		),
 	)
 	return key
+}
+func CollectButtonData(v tgbotapi.InlineKeyboardMarkup) map[string]bool {
+	set := make(map[string]bool, len(v.InlineKeyboard))
+	for _, buttons := range v.InlineKeyboard {
+		for _, button := range buttons {
+			set[*button.CallbackData] = true
+		}
+	}
+	return set
 }
