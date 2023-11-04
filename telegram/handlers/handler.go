@@ -41,14 +41,14 @@ func (b *Bot) handleCommand(msg *tgbotapi.MessageConfig, update *tgbotapi.Update
 	command := update.Message.Command()
 	switch command {
 	case "start":
-		val, err := files.ReadTXT("utils/texts/start-msg.txt")
+		val, err := files.ReadTXT("utils/text/txt/start-msg.txt")
 		if err != nil {
 			log.Println("Error with reading start-msg.txt ", err.Error())
 		}
 		msg.Text = val
 		msg.ReplyMarkup = inline.BuyOrRent()
 	case "help":
-		val, err := files.ReadTXT("utils/texts/text.txt")
+		val, err := files.ReadTXT("utils/text/txt/text.txt")
 		if err != nil {
 			log.Println("Error with something", err)
 		}
@@ -77,7 +77,7 @@ func (b *Bot) handleCommand(msg *tgbotapi.MessageConfig, update *tgbotapi.Update
 			log.Println("Cannot update city in the city switch case ", err)
 			return
 		}
-		val, err = files.ReadTXT("utils/texts/text.txt")
+		val, err = files.ReadTXT("utils/text/txt/text.txt")
 		if err != nil {
 			log.Println("Cannot read from the text.txt file ", err.Error())
 		}
@@ -405,7 +405,7 @@ func (b *Bot) handleCallbackQuery(update *tgbotapi.Update, user *models.User, db
 		b.sendMessage(&msg)
 	} else if city[update.CallbackQuery.Data] {
 		user.City = update.CallbackQuery.Data
-		val, err := files.ReadTXT("utils/texts/text.txt")
+		val, err := files.ReadTXT("utils/text/txt/text.txt")
 		if err != nil {
 			log.Println("Cannot read the after-start.txt file ", err.Error())
 		}

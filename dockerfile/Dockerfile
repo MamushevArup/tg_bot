@@ -8,12 +8,16 @@ RUN go mod download
 
 COPY . .
 
+COPY utils/texts/*.txt /utils/texts/
+
 RUN CGO_ENABLED=0 go build -o /krisha cmd/main.go
 
-FROM scratch
+FROM alpine:latest
 
-WORKDIR /
+WORKDIR /app
 
-COPY --from=builder /krisha /krisha
+COPY --from=builder /krisha .
 
-ENTRYPOINT ["/krisha"]
+COPY --from=builder /utils/texts/ /app/utils/text/txt
+
+ENTRYPOINT ["/app/krisha"]

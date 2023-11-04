@@ -18,7 +18,7 @@ func NewBot(b *tgbotapi.BotAPI) *Bot {
 
 func (b *Bot) Start(db *postgres.Sql) {
 	log.Println("Start the application")
-	b.bot.Debug = true
+	//b.bot.Debug = true
 	log.Printf("Authorized on account %s", b.bot.Self.UserName)
 
 	u := tgbotapi.NewUpdate(0)

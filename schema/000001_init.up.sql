@@ -12,6 +12,7 @@ create table users
     priceFrom int,
     floorFrom int,
     floorInTheHouseFrom int,
+
     areaFrom varchar(64),
     kitchenFrom varchar(64),
 
