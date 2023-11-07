@@ -342,6 +342,8 @@ func (b *Bot) handleCommand(msg *tgbotapi.MessageConfig, update *tgbotapi.Update
 		}
 		res := b.allCommand(val)
 		msg.Text = res
+	case "ch":
+		db.Insert()
 	case "run":
 		msg.Text = "Идет поиск подходящих обьявлений\nТелеграм оповестит вас когда мы найдем подходящие обьявления\nДля этого уберите беззвучный режим."
 		go func() {

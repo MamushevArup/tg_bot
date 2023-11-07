@@ -7,7 +7,6 @@ import (
 	"github.com/jmoiron/sqlx"
 	"log"
 	"os"
-	"sync"
 )
 
 type Sql struct {
@@ -16,12 +15,11 @@ type Sql struct {
 	User *models.User
 }
 
-var once sync.Once
 var db = new(Sql)
 
 // NewDB returns a singleton instance of *sql.DB
 func NewDB() *Sql {
-	once.Do(initializeDB)
+	initializeDB()
 	return db
 }
 
@@ -37,5 +35,8 @@ func initializeDB() {
 	db.Db, err = sqlx.Open("postgres", psqlInfo)
 	if err != nil {
 		log.Fatal("Error with connect to the database:", err)
+	}
+	if err = db.Db.Ping(); err != nil {
+		log.Panic("Error with ping ", err)
 	}
 }

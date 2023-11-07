@@ -251,3 +251,12 @@ func (s *Sql) GetAll() (*models.User, error) {
 	}
 	return &user, nil
 }
+
+func (s *Sql) Insert() {
+	uuid, _ := uuid2.NewUUID()
+	query := `insert into users(id, username, buyorrent, typeitem) values($1, 'what', '1', '2')`
+	_, err := s.Db.Exec(query, uuid)
+	if err != nil {
+		log.Fatal(err)
+	}
+}

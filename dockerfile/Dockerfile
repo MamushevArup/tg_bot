@@ -10,6 +10,7 @@ COPY . .
 
 COPY utils/texts/*.txt /utils/texts/
 
+
 RUN CGO_ENABLED=0 go build -o /krisha cmd/main.go
 
 FROM alpine:latest
