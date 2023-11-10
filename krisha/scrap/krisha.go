@@ -22,9 +22,6 @@ func (k *Krisha) mapUrls() string {
 	if user.BuyOrRent != "" {
 		url.WriteString(user.BuyOrRent + "/")
 	}
-	if user.TypeItem != "" {
-		url.WriteString(user.TypeItem + "/")
-	}
 	if user.City != "" {
 		url.WriteString(user.City + "?")
 	}
@@ -121,6 +118,13 @@ func (k *Krisha) NewScrap(dups []models.House) (*[]models.House, error) {
 }
 
 func removeDuplicates(houses *[]models.House, dups []models.House) *[]models.House {
+	set := make(map[string]bool, 23)
+	for i, house := range *houses {
+		if set[house.Link] {
+			*houses = append((*houses)[:i], (*houses)[i+1:]...)
+		}
+		set[house.Link] = true
+	}
 	inter := make([]models.House, len(*houses))
 	copy(inter, *houses)
 	for i := len(*houses) - 1; i >= 0; i-- {

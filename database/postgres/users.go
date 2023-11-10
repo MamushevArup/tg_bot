@@ -40,16 +40,16 @@ func (s *Sql) insertIntro(user *models.User) {
 	// if user do not exists
 	uuid := uuid2.New()
 	s.id = uuid
-	query := `insert into users(id, username, buyOrRent, typeItem, city) values ($1, $2, $3, $4, $5)`
-	_, err := s.Db.Exec(query, uuid, user.Username, user.BuyOrRent, user.TypeItem, user.City)
+	query := `insert into users(id, username, buyOrRent, city) values ($1, $2, $3, $4)`
+	_, err := s.Db.Exec(query, uuid, user.Username, user.BuyOrRent, user.City)
 	if err != nil {
 		log.Fatal("Error with inserting values to the user InsertIntro method ", err)
 	}
 }
 
 func (s *Sql) updateIntro(id uuid2.UUID, users *models.User) {
-	query := `update users set buyOrRent = $2, typeItem = $3, city = $4 where id = $1`
-	_, err := s.Db.Exec(query, id, users.BuyOrRent, users.TypeItem, users.City)
+	query := `update users set buyOrRent = $2, city = $3 where id = $1`
+	_, err := s.Db.Exec(query, id, users.BuyOrRent, users.City)
 	if err != nil {
 		log.Println("Error cannot update in t"+
 			"he updateInto method ", err)

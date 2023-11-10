@@ -13,20 +13,6 @@ func BuyOrRent() tgbotapi.InlineKeyboardMarkup {
 	)
 	return keyboard
 }
-func TypeItem() tgbotapi.InlineKeyboardMarkup {
-	var numericKeyboard = tgbotapi.NewInlineKeyboardMarkup(
-		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("Квартиры", "kvartiry"),
-			tgbotapi.NewInlineKeyboardButtonData("Дома", "doma"),
-			tgbotapi.NewInlineKeyboardButtonData("Дачи", "dachi"),
-		),
-		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("Бизнес", "biznes"),
-			tgbotapi.NewInlineKeyboardButtonData("Коммерческая", "kommercheskaya-nedvizhimost"),
-		),
-	)
-	return numericKeyboard
-}
 func ChooseCity() tgbotapi.InlineKeyboardMarkup {
 	var key = tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(

@@ -3,7 +3,6 @@ create table users
     id UUID,
     username varchar(255) not null,
     buyOrRent varchar(64) not null,
-    typeItem varchar(64) not null,
     city varchar(128),
     rooms text[],
     typeHouse text[],

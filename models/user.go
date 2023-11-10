@@ -12,7 +12,6 @@ type User struct {
 }
 type UserChoice struct {
 	BuyOrRent             string         `db:"buyorrent" json:"buy_or_rent,omitempty"`
-	TypeItem              string         `db:"typeitem" json:"type_item,omitempty"`
 	City                  string         `db:"city" json:"city,omitempty,omitempty"`
 	Rooms                 pq.StringArray `db:"rooms" json:"rooms,omitempty"`
 	TypeHouse             pq.StringArray `db:"typehouse" json:"type_house,omitempty"`
