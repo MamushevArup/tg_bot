@@ -40,16 +40,18 @@ func (s *Sql) insertIntro(user *models.User) {
 	// if user do not exists
 	uuid := uuid2.New()
 	s.id = uuid
-	query := `insert into users(id, username, buyOrRent, city) values ($1, $2, $3, $4)`
-	_, err := s.Db.Exec(query, uuid, user.Username, user.BuyOrRent, user.City)
+	query := `insert into users(id, username, city) values ($1, $2, $3)`
+	_, err := s.Db.Exec(query, uuid, user.Username, user.City)
 	if err != nil {
 		log.Fatal("Error with inserting values to the user InsertIntro method ", err)
 	}
 }
 
 func (s *Sql) updateIntro(id uuid2.UUID, users *models.User) {
-	query := `update users set buyOrRent = $2, city = $3 where id = $1`
-	_, err := s.Db.Exec(query, id, users.BuyOrRent, users.City)
+
+	query := `update users set  city = $2 where id = $1`
+	_, err := s.Db.Exec(query, id, users.City)
+
 	if err != nil {
 		log.Println("Error cannot update in t"+
 			"he updateInto method ", err)
@@ -64,6 +66,13 @@ func (s *Sql) UpdateCity(city string) error {
 		return err
 	}
 	return nil
+}
+
+func (s *Sql) GetCity() string {
+	query := `select city from users where id = $1`
+	var city string
+	_ = s.Db.QueryRow(query, s.id).Scan(&city)
+	return city
 }
 
 func (s *Sql) UpdateRooms(rooms []string) error {
@@ -251,12 +260,19 @@ func (s *Sql) GetAll() (*models.User, error) {
 	}
 	return &user, nil
 }
+func (s *Sql) IsRunning() bool {
+	query := `select running from users where id = $1`
+	var state bool
+	_ = s.Db.QueryRow(query, s.id).Scan(&state)
+	return state
 
-func (s *Sql) Insert() {
-	uuid, _ := uuid2.NewUUID()
-	query := `insert into users(id, username, buyorrent, typeitem) values($1, 'what', '1', '2')`
-	_, err := s.Db.Exec(query, uuid)
+}
+func (s *Sql) SetRunning(state bool) error {
+	query := `update users set running = $2 where id = $1`
+	_, err := s.Db.Exec(query, s.id, state)
 	if err != nil {
-		log.Fatal(err)
+		log.Println("Cannot set running in the SetRunning method")
+		return err
 	}
+	return nil
 }

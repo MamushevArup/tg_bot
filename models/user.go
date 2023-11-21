@@ -11,7 +11,6 @@ type User struct {
 	UserChoice
 }
 type UserChoice struct {
-	BuyOrRent             string         `db:"buyorrent" json:"buy_or_rent,omitempty"`
 	City                  string         `db:"city" json:"city,omitempty,omitempty"`
 	Rooms                 pq.StringArray `db:"rooms" json:"rooms,omitempty"`
 	TypeHouse             pq.StringArray `db:"typehouse" json:"type_house,omitempty"`
@@ -32,4 +31,5 @@ type UserChoice struct {
 	AreaTo                *string        `db:"areato" json:"area_to,omitempty"`
 	KitchenAreaFrom       *string        `db:"kitchenfrom" json:"kitchen_area,omitempty"`
 	KitchenAreaTo         *string        `db:"kitchento" json:"kitchen_area_to,omitempty"`
+	Running               *bool          `db:"running" json:"running,omitempty"`
 }

@@ -1,14 +1,20 @@
 package handlers
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/MamushevArup/krisha-scraper/database/postgres"
+	"github.com/MamushevArup/krisha-scraper/krisha/scrap"
 	"github.com/MamushevArup/krisha-scraper/models"
 	"github.com/MamushevArup/krisha-scraper/telegram/inline"
+	"github.com/MamushevArup/krisha-scraper/utils"
 	"github.com/MamushevArup/krisha-scraper/utils/files"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/gocolly/colly"
 	"log"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func (b *Bot) HandleUpdate(update *tgbotapi.Update, user *models.User, db *postgres.Sql) {
@@ -40,30 +46,17 @@ func (b *Bot) handleCommand(msg *tgbotapi.MessageConfig, update *tgbotapi.Update
 			log.Println("Error with reading start-msg.txt ", err.Error())
 		}
 		msg.Text = val
-		msg.ReplyMarkup = inline.BuyOrRent()
+		msg.ReplyMarkup = inline.ChooseCity()
 	case "help":
 		val, err := files.ReadTXT("utils/text/txt/text.txt")
 		if err != nil {
-			log.Println("Error with something", err)
+			log.Println("Error with reading the docs to the bot", err)
 		}
 		msg.Text = val
 	case "city":
-		val := update.Message.CommandArguments()
-		if val == "" {
-			msg.Text = "Введите город\nПример /city Алматы"
-			return
-		}
-		flag := false
-		for k, v := range listCities() {
-			if k == val {
-				flag = true
-				val = v
-			}
-		}
-		if !flag {
-			msg.Text = "Возможно вы неправильно ввели название города или на данный момент этот город недоступен. \nПовторите попытку"
-			return
-		}
+		hmap := inline.ChooseCity()
+		msg.ReplyMarkup = hmap
+		val := update.CallbackQuery.Data
 		user.City = val
 		err := db.UpdateCity(val)
 		if err != nil {
@@ -76,6 +69,9 @@ func (b *Bot) handleCommand(msg *tgbotapi.MessageConfig, update *tgbotapi.Update
 			log.Println("Cannot read from the text.txt file ", err.Error())
 		}
 		msg.Text = val
+	case "region":
+		msg.Text = "Выберите район для поиска квартир"
+		//val := update.CallbackData()
 	case "rooms":
 		val := update.Message.CommandArguments()
 		if val == "" {
@@ -113,6 +109,14 @@ func (b *Bot) handleCommand(msg *tgbotapi.MessageConfig, update *tgbotapi.Update
 		msg.Text = "Отлично!\nТеперь вы можете запустить поиск командой /run или продолжите настройку\nДоступные команды доступны /help"
 	case "type":
 		val := update.Message.CommandArguments()
+		if val == "" {
+			user.UserChoice.TypeHouse = nil
+			err := db.UpdateType(nil)
+			if err != nil {
+				log.Println("Error with updating rooms in the rooms switch case ", err)
+			}
+			return
+		}
 		arrOfTypeHouse := strings.Split(val, ",")
 		for _, s := range arrOfTypeHouse {
 			curr, err := strconv.Atoi(s)
@@ -129,9 +133,10 @@ func (b *Bot) handleCommand(msg *tgbotapi.MessageConfig, update *tgbotapi.Update
 			return
 		}
 		msg.Text = "Отлично!\nТеперь вы можете запустить поиск командой /run или продолжите настройку\nДоступные команды доступны /help"
-	case "builtFrom":
+	case "builtfrom":
 		val := update.Message.CommandArguments()
 		if val == "" {
+
 			user.YearOfBuiltFrom = nil
 			err := db.UpdateBuiltFrom(0)
 			if err != nil {
@@ -154,7 +159,7 @@ func (b *Bot) handleCommand(msg *tgbotapi.MessageConfig, update *tgbotapi.Update
 		}
 		curr := uint(year)
 		user.UserChoice.YearOfBuiltFrom = &curr
-	case "builtTo":
+	case "builtto":
 		val := update.Message.CommandArguments()
 		if val == "" {
 			user.YearOfBuiltTo = nil
@@ -180,15 +185,17 @@ func (b *Bot) handleCommand(msg *tgbotapi.MessageConfig, update *tgbotapi.Update
 		curr := uint(year)
 		user.UserChoice.YearOfBuiltTo = &curr
 
-	case "priceFrom":
+	case "pricefrom":
 		val := update.Message.CommandArguments()
 		if val == "" {
+
 			user.PriceFrom = nil
 			err := db.UpdatePriceFrom(0)
 			if err != nil {
 				log.Println("Error with updating priceFrom in the priceFrom switch case ", err)
 				msg.Text = "Не удается обновить стартовую цену ознакомьтесь с документацией по команде /help и повторите попытку"
 			}
+
 			return
 		}
 		price, err := trimAllSpaces(val)
@@ -204,15 +211,17 @@ func (b *Bot) handleCommand(msg *tgbotapi.MessageConfig, update *tgbotapi.Update
 			return
 		}
 		user.UserChoice.PriceFrom = &price
-	case "priceTo":
+	case "priceto":
 		val := update.Message.CommandArguments()
 		if val == "" {
+
 			user.PriceTo = nil
 			err := db.UpdatePriceTo(0)
 			if err != nil {
 				log.Println("Error with updating priceTo in the priceTo switch case ", err)
 				msg.Text = "Не удается обновить сумму до ознакомьтесь с документацией по команде /help и повторите попытку"
 			}
+
 			return
 		}
 		price, err := trimAllSpaces(val)
@@ -228,15 +237,17 @@ func (b *Bot) handleCommand(msg *tgbotapi.MessageConfig, update *tgbotapi.Update
 			return
 		}
 		user.UserChoice.PriceTo = &price
-	case "floorFrom":
+	case "floorfrom":
 		val := update.Message.CommandArguments()
 		if val == "" {
+
 			user.FloorFrom = nil
 			err := db.UpdateFloorFrom(0)
 			if err != nil {
 				log.Println("Error with updating floorFrom ", err)
 				msg.Text = "Не удается обновить стартовый этаж ознакомьтесь с документацией по команде /help и повторите попытку"
 			}
+
 			return
 		}
 		floor, err := strconv.ParseUint(val, 10, 32)
@@ -253,9 +264,10 @@ func (b *Bot) handleCommand(msg *tgbotapi.MessageConfig, update *tgbotapi.Update
 		}
 		curr := uint(floor)
 		user.UserChoice.FloorFrom = &curr
-	case "floorTo":
+	case "floorto":
 		val := update.Message.CommandArguments()
 		if val == "" {
+
 			user.FloorTo = nil
 			err := db.UpdateFloorTo(0)
 			if err != nil {
@@ -264,6 +276,7 @@ func (b *Bot) handleCommand(msg *tgbotapi.MessageConfig, update *tgbotapi.Update
 			}
 			return
 		}
+
 		floor, err := strconv.ParseUint(val, 10, 32)
 		if err != nil {
 			log.Println("Cannot convert string to int ", val+" "+err.Error())
@@ -278,7 +291,7 @@ func (b *Bot) handleCommand(msg *tgbotapi.MessageConfig, update *tgbotapi.Update
 		}
 		curr := uint(floor)
 		user.UserChoice.FloorTo = &curr
-	case "notFirst":
+	case "notfirst":
 		flag := true
 		user.UserChoice.CheckboxNotFirstFloor = &flag
 		err := db.UpdateNotFirstFloor(true)
@@ -287,7 +300,7 @@ func (b *Bot) handleCommand(msg *tgbotapi.MessageConfig, update *tgbotapi.Update
 			msg.Text = "Не удается обновить параметр не первый этаж ознакомьтесь с документацией по команде /help и повторите попытку"
 			return
 		}
-	case "notLast":
+	case "notlast":
 		flag := true
 		user.UserChoice.CheckboxNotLastFloor = &flag
 		err := db.UpdateNotLastFloor(true)
@@ -296,7 +309,7 @@ func (b *Bot) handleCommand(msg *tgbotapi.MessageConfig, update *tgbotapi.Update
 			msg.Text = "Не удается обновить параметр не последний этаж ознакомьтесь с документацией по команде /help и повторите попытку"
 			return
 		}
-	case "fromOwner":
+	case "fromowner":
 		flag := true
 		user.UserChoice.CheckboxFromOwner = &flag
 		err := db.UpdateFromOwner(true)
@@ -305,7 +318,7 @@ func (b *Bot) handleCommand(msg *tgbotapi.MessageConfig, update *tgbotapi.Update
 			msg.Text = "Не удается обновить параметр от владельца ознакомьтесь с документацией по команде /help и повторите попытку"
 			return
 		}
-	case "newBuilding":
+	case "newbuilding":
 		flag := true
 		user.UserChoice.CheckboxNewBuilding = &flag
 		err := db.UpdateNewBuilding(true)
@@ -314,7 +327,7 @@ func (b *Bot) handleCommand(msg *tgbotapi.MessageConfig, update *tgbotapi.Update
 			msg.Text = "Не удается обновить параметр новостройка ознакомьтесь с документацией по команде /help и повторите попытку"
 			return
 		}
-	case "realEstate":
+	case "realestate":
 		flag := true
 		user.UserChoice.CheckRealEstate = &flag
 		err := db.UpdateRealEstate(true)
@@ -323,15 +336,17 @@ func (b *Bot) handleCommand(msg *tgbotapi.MessageConfig, update *tgbotapi.Update
 			msg.Text = "Не удается обновить параметр от крыша агента ознакомьтесь с документацией по команде /help и повторите попытку"
 			return
 		}
-	case "floorHouseFrom":
+	case "floorhfrom":
 		val := update.Message.CommandArguments()
 		if val == "" {
+
 			user.FloorInTheHouseFrom = nil
 			err := db.UpdateFloorInTheHouseFrom(0)
 			if err != nil {
 				log.Println("Error with updating floorInTheHouseFrom ", err)
 				msg.Text = "Не удается обновить параметр этаж в доме от ознакомьтесь с документацией по команде /help и повторите попытку"
 			}
+
 			return
 		}
 		floor, err := strconv.ParseUint(val, 10, 32)
@@ -348,15 +363,17 @@ func (b *Bot) handleCommand(msg *tgbotapi.MessageConfig, update *tgbotapi.Update
 		}
 		curr := uint(floor)
 		user.UserChoice.FloorInTheHouseFrom = &curr
-	case "floorHouseTo":
+	case "floorhto":
 		val := update.Message.CommandArguments()
 		if val == "" {
+
 			user.FloorInTheHouseTo = nil
 			err := db.UpdateFloorInTheHouseTo(0)
 			if err != nil {
 				log.Println("Error with updating floorInTheHouseTo ", err)
 				msg.Text = "Не удается обновить параметр этаж в доме до ознакомьтесь с документацией по команде /help и повторите попытку"
 			}
+
 			return
 		}
 		floor, err := strconv.ParseUint(val, 10, 32)
@@ -373,14 +390,16 @@ func (b *Bot) handleCommand(msg *tgbotapi.MessageConfig, update *tgbotapi.Update
 		}
 		curr := uint(floor)
 		user.UserChoice.FloorInTheHouseTo = &curr
-	case "areaFrom":
+	case "areafrom":
 		val := update.Message.CommandArguments()
 		if val == "" {
+
 			user.AreaFrom = nil
 			err := db.UpdateAreaFrom("")
 			if err != nil {
 				log.Println("Error with updating areaFrom ", err)
 				msg.Text = "Не удается обновить параметр стартовая площадь ознакомьтесь с документацией по команде /help и повторите попытку"
+
 			}
 			return
 		}
@@ -391,14 +410,16 @@ func (b *Bot) handleCommand(msg *tgbotapi.MessageConfig, update *tgbotapi.Update
 			msg.Text = "Не удается обновить параметр стартовая площадь ознакомьтесь с документацией по команде /help и повторите попытку"
 			return
 		}
-	case "areaTo":
+	case "areato":
 		val := update.Message.CommandArguments()
 		if val == "" {
+
 			user.AreaTo = nil
 			err := db.UpdateAreaTo("")
 			if err != nil {
 				log.Println("Error with updating areaTo ", err)
 				msg.Text = "Не удается обновить параметр площадь до ознакомьтесь с документацией по команде /help и повторите попытку"
+
 			}
 			return
 		}
@@ -409,9 +430,10 @@ func (b *Bot) handleCommand(msg *tgbotapi.MessageConfig, update *tgbotapi.Update
 			msg.Text = "Не удается обновить параметр площадь до ознакомьтесь с документацией по команде /help и повторите попытку"
 			return
 		}
-	case "kitFrom":
+	case "kitfrom":
 		val := update.Message.CommandArguments()
 		if val == "" {
+
 			user.KitchenAreaFrom = nil
 			err := db.UpdateKitchenFrom("")
 			if err != nil {
@@ -420,6 +442,7 @@ func (b *Bot) handleCommand(msg *tgbotapi.MessageConfig, update *tgbotapi.Update
 			}
 			return
 		}
+
 		user.UserChoice.KitchenAreaFrom = &val
 		err := db.UpdateKitchenFrom(val)
 		if err != nil {
@@ -427,14 +450,16 @@ func (b *Bot) handleCommand(msg *tgbotapi.MessageConfig, update *tgbotapi.Update
 			msg.Text = "Не удается обновить параметр площадь кухни от ознакомьтесь с документацией по команде /help и повторите попытку"
 			return
 		}
-	case "kitTo":
+	case "kitto":
 		val := update.Message.CommandArguments()
 		if val == "" {
+
 			user.KitchenAreaTo = nil
 			err := db.UpdateKitchenTo("")
 			if err != nil {
 				log.Println("Error with updating kitchenTo ", err)
 				msg.Text = "Не удается обновить параметр площадь кухни до ознакомьтесь с документацией по команде /help и повторите попытку"
+
 			}
 			return
 		}
@@ -452,16 +477,203 @@ func (b *Bot) handleCommand(msg *tgbotapi.MessageConfig, update *tgbotapi.Update
 		}
 		res := b.allCommand(val)
 		msg.Text = res
-	case "ch":
-		db.Insert()
+
 	case "run":
+		state := db.IsRunning()
+		if state {
+			msg.Text = "Поиск квартир уже идет ожидайте"
+			return
+		}
+		err := db.SetRunning(true)
+		if err != nil {
+			return
+		}
 		msg.Text = "Идет поиск подходящих обьявлений\nТелеграм оповестит вас когда мы найдем подходящие обьявления\nДля этого уберите беззвучный режим."
 		go func() {
 			b.tickStart(msg, update, db)
 		}()
 	case "stop":
+		err := db.SetRunning(false)
+		if err != nil {
+			return
+		}
 		msg.Text = "Вы остановили поиск обьявлений теперь можете изменить настройки\nПо комманде /help смотрите все доступные комманды"
 	default:
 		msg.Text = "Нет такой комманды. Ознакомьтесь с документацией"
+	}
+}
+
+func sliceOrder() []string {
+	fieldOrder := []string{
+		"Ссылка",
+		"Заголовок",
+		"Цена",
+		"Город",
+		"Тип дома",
+		"Жилой комплекс",
+		"Год постройки",
+		"Площадь",
+		"Санузел",
+		"Потолки",
+		"Состояние",
+		"Бывшее общежитие",
+	}
+	return fieldOrder
+}
+
+func orderOutput(fieldOrder []string, data map[string]interface{}) string {
+	var res string
+	for _, ord := range fieldOrder {
+		v, ok := data[ord]
+		if ok {
+			switch curr := v.(type) {
+			case string:
+				res += ord + " : " + v.(string) + "\n"
+			case float64:
+				floatStr := strconv.FormatFloat(curr, 'f', -1, 64)
+				res += ord + " : " + floatStr + "\n"
+			}
+		}
+	}
+	return res
+}
+
+func (b *Bot) handleCallbackQuery(update *tgbotapi.Update, user *models.User, db *postgres.Sql) {
+	chatID := update.CallbackQuery.Message.Chat.ID
+	msg := tgbotapi.NewMessage(chatID, "")
+	city := inline.CollectButtonData(inline.ChooseCity())
+	region := inline.CollectButtonData(inline.ChooseRegion(update.CallbackQuery.Data))
+	if db.GetCity() != "" {
+		msg.Text = "Для изменения города используйте команду /city\nДля изменения региона используйте команду /region"
+		b.sendMessage(&msg)
+		return
+	}
+	if city[update.CallbackQuery.Data] {
+		user.City = update.CallbackQuery.Data
+		msg.Text = "Выберите один из районов города "
+		msg.ReplyMarkup = inline.ChooseRegion(update.CallbackQuery.Data)
+		b.sendMessage(&msg)
+	} else if region[update.CallbackQuery.Data] {
+		if update.CallbackQuery.Data == "-" {
+			update.CallbackQuery.Data = user.City
+		}
+		user.City = update.CallbackQuery.Data
+		db.IntroDataStartCommand(user)
+		fmt.Println("Enter here the value")
+		msg.Text = update.CallbackQuery.Data
+		b.sendMessage(&msg)
+	}
+}
+
+func (b *Bot) sendMessage(msg *tgbotapi.MessageConfig) {
+	_, err := b.bot.Send(msg)
+	if err != nil {
+		return
+	}
+}
+func listCities() map[string]string {
+	return map[string]string{"Алматы": "almaty", "Астана": "astana", "Шымкент": "shymkent", "Актау": "aktau"}
+}
+func trimAllSpaces(s string) (uint64, error) {
+	var val string
+	for _, i2 := range s {
+		if i2 != ' ' {
+			val += string(i2)
+		}
+	}
+	res, err := strconv.ParseUint(val, 10, 64)
+	if err != nil {
+		log.Println("error with converting string to the uint")
+		return 0, err
+	}
+	return res, nil
+}
+
+func (b *Bot) allCommand(val *models.User) string {
+
+	js, err := utils.ConvertToJSONO(val)
+	if err != nil {
+		log.Println("Cannot convert struct to json all command ", err.Error())
+	}
+	var hmap map[string]interface{}
+	if err = json.Unmarshal([]byte(js), &hmap); err != nil {
+		log.Println("cannot convert to the map all command ", err.Error())
+	}
+	fmt.Println(hmap)
+	newM := utils.EnRusUser(hmap)
+	var res strings.Builder
+	for s, i := range newM {
+
+		switch t := i.(type) {
+		case string:
+			res.WriteString(s + " : " + t + "\n")
+		case []string:
+			jn := strings.Join(t, ",")
+			res.WriteString(s + " : " + jn + "\n")
+		case float64:
+			if t == float64(uint(t)) {
+				res.WriteString(s + " : " + strconv.FormatUint(uint64(t), 10) + "\n")
+			} else {
+				res.WriteString(s + " : " + strconv.FormatFloat(t, 'f', -1, 64) + "\n")
+			}
+		case bool:
+			var tof string
+			if t {
+				tof = "true"
+			} else {
+				tof = "false"
+			}
+			res.WriteString(s + " : " + tof + "\n")
+		}
+	}
+	return res.String()
+}
+
+func (b *Bot) rangeHouses(houses *[]models.House, update *tgbotapi.Update) {
+	for _, house := range *houses {
+		val, err := utils.ConvertToJSONO(house)
+		fieldOrder := sliceOrder()
+		var hmap map[string]interface{}
+
+		if err != nil {
+			log.Println("Cannot convert one element to the json ", err)
+		}
+		if err = json.Unmarshal([]byte(val), &hmap); err != nil {
+			log.Println("Error with converting json to the map")
+		}
+		newM := utils.EnRusHouse(hmap)
+		output := orderOutput(fieldOrder, newM)
+
+		msg2 := tgbotapi.NewMessage(update.Message.Chat.ID, output)
+		b.sendMessage(&msg2)
+	}
+	houses = &[]models.House{}
+}
+func (b *Bot) tickStart(msg *tgbotapi.MessageConfig, update *tgbotapi.Update, db *postgres.Sql) {
+	c := colly.NewCollector(
+		colly.AllowURLRevisit(),
+	)
+	usr, err := db.GetAll()
+	if err != nil {
+		log.Println("error with getting all info about user ", err.Error())
+	}
+	c.SetRequestTimeout(90 * time.Second)
+	init := scrap.New(c, usr)
+	ticker := time.NewTicker(2 * time.Minute)
+
+	dups := make([]models.House, 30)
+	for range ticker.C {
+
+		houses, err := init.NewScrap(dups)
+		if err != nil {
+			msg.Text = "Возникли проблемы с веб-сайтом Krisha.kz ожидайте..."
+			break
+		}
+		if update.Message != nil {
+			if update.Message.Command() == "stop" {
+				break
+			}
+		}
+		b.rangeHouses(houses, update)
 	}
 }

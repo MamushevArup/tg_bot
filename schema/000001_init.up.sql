@@ -2,7 +2,10 @@ create table users
 (
     id UUID,
     username varchar(255) not null,
+<<<<<<< HEAD
     buyOrRent varchar(64) not null,
+=======
+>>>>>>> ef43dad
     city varchar(128),
     rooms text[],
     typeHouse text[],
@@ -27,6 +30,7 @@ create table users
     fromOwner bool,
     newBuilding bool,
     realEstate bool,
+    running bool,
 
     primary key(id, username)
 )
