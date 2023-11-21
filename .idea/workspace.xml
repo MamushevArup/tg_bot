@@ -4,22 +4,7 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d63aa283-bd14-437e-8992-a7c50f0ce04d" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/models/Rent.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/models/RentHouse.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/telegram/handlers/utils.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sqldialects.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sqldialects.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docker-compose.yml" beforeDir="false" afterPath="$PROJECT_DIR$/docker-compose.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/krisha/scrap/krisha.go" beforeDir="false" afterPath="$PROJECT_DIR$/krisha/scrap/krisha.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/user.go" beforeDir="false" afterPath="$PROJECT_DIR$/models/user.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/schema/000001_init.up.sql" beforeDir="false" afterPath="$PROJECT_DIR$/schema/000001_init.up.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/telegram/handlers/handler.go" beforeDir="false" afterPath="$PROJECT_DIR$/telegram/handlers/handler.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/telegram/handlers/telegram.go" beforeDir="false" afterPath="$PROJECT_DIR$/telegram/handlers/telegram.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/telegram/inline/keyboard.go" beforeDir="false" afterPath="$PROJECT_DIR$/telegram/inline/keyboard.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/texts/start-msg.txt" beforeDir="false" afterPath="$PROJECT_DIR$/utils/texts/start-msg.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/texts/text.txt" beforeDir="false" afterPath="$PROJECT_DIR$/utils/texts/text.txt" afterDir="false" />
-    </list>
+    <list default="true" id="d63aa283-bd14-437e-8992-a7c50f0ce04d" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
