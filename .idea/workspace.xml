@@ -6,11 +6,18 @@
   <component name="ChangeListManager">
     <list default="true" id="d63aa283-bd14-437e-8992-a7c50f0ce04d" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database/postgres/postgres.go" beforeDir="false" afterPath="$PROJECT_DIR$/database/postgres/postgres.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/database/postgres/users.go" beforeDir="false" afterPath="$PROJECT_DIR$/database/postgres/users.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docker-compose.yml" beforeDir="false" afterPath="$PROJECT_DIR$/docker-compose.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/dockerfile/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/dockerfile/Dockerfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/krisha/scrap/krisha.go" beforeDir="false" afterPath="$PROJECT_DIR$/krisha/scrap/krisha.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/krisha/scrap/utils.go" beforeDir="false" afterPath="$PROJECT_DIR$/krisha/scrap/utils.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/user.go" beforeDir="false" afterPath="$PROJECT_DIR$/models/user.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/schema/000001_init.up.sql" beforeDir="false" afterPath="$PROJECT_DIR$/schema/000001_init.up.sql" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/telegram/handlers/handler.go" beforeDir="false" afterPath="$PROJECT_DIR$/telegram/handlers/handler.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/telegram/handlers/telegram.go" beforeDir="false" afterPath="$PROJECT_DIR$/telegram/handlers/telegram.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/telegram/inline/keyboard.go" beforeDir="false" afterPath="$PROJECT_DIR$/telegram/inline/keyboard.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/texts/start-msg.txt" beforeDir="false" afterPath="$PROJECT_DIR$/utils/texts/start-msg.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/texts/text.txt" beforeDir="false" afterPath="$PROJECT_DIR$/utils/texts/text.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -37,30 +44,30 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;DefaultGoTemplateProperty&quot;: &quot;Go File&quot;,
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.go.formatter.settings.were.checked&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.go.migrated.go.modules.settings&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.go.modules.automatic.dependencies.download&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.go.modules.go.list.on.any.changes.was.set&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;go.import.settings.migrated&quot;: &quot;true&quot;,
-    &quot;go.sdk.automatically.set&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/arupm/OneDrive/Рабочий стол/golang/krisha&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;go.autoimport&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "DefaultGoTemplateProperty": "Go File",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.go.formatter.settings.were.checked": "true",
+    "RunOnceActivity.go.migrated.go.modules.settings": "true",
+    "RunOnceActivity.go.modules.automatic.dependencies.download": "true",
+    "RunOnceActivity.go.modules.go.list.on.any.changes.was.set": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "git-widget-placeholder": "32edcc8d",
+    "go.import.settings.migrated": "true",
+    "go.sdk.automatically.set": "true",
+    "last_opened_file_path": "C:/Users/arupm/OneDrive/Рабочий стол/golang/krisha/cmd/main.go",
+    "node.js.detected.package.eslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "settings.editor.selected.configurable": "go.autoimport"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;DatabaseDriversLRU&quot;: [
-      &quot;postgresql&quot;
+  "keyToStringList": {
+    "DatabaseDriversLRU": [
+      "postgresql"
     ]
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\arupm\OneDrive\Рабочий стол\golang\krisha" />
@@ -69,6 +76,22 @@
       <recent name="C:\Users\arupm\OneDrive\Рабочий стол\golang\krisha" />
       <recent name="C:\Users\arupm\OneDrive\Рабочий стол\golang\krisha\telegram\handlers" />
     </key>
+  </component>
+  <component name="RunManager">
+    <configuration name="go build" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true">
+      <module name="krisha" />
+      <working_directory value="$PROJECT_DIR$" />
+      <kind value="FILE" />
+      <package value="github.com/MamushevArup/krisha-scraper" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$/telegram/inline/keyboard.go|$PROJECT_DIR$/telegram/inline/keyboard.go|$PROJECT_DIR$/cmd/main.go" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Go Build.go build" />
+      </list>
+    </recent_temporary>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TypeScriptGeneratedFilesManager">

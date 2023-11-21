@@ -3,7 +3,6 @@ package handlers
 import (
 	"github.com/MamushevArup/krisha-scraper/database/postgres"
 	"github.com/MamushevArup/krisha-scraper/models"
-	"github.com/MamushevArup/krisha-scraper/telegram/inline"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"log"
 )
@@ -31,10 +30,4 @@ func (b *Bot) Start(db *postgres.Sql) {
 		b.HandleUpdate(&update, user, db)
 	}
 
-}
-
-func (b *Bot) sendSecondInlineKeyboard(chatID int64) {
-	msg := tgbotapi.NewMessage(chatID, "Отлично теперь выбери одно из следущих")
-	msg.ReplyMarkup = inline.TypeItem()
-	b.sendMessage(&msg)
 }

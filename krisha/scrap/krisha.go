@@ -19,12 +19,6 @@ func (k *Krisha) mapUrls() string {
 	var url strings.Builder
 	user := k.User.UserChoice
 
-	if user.BuyOrRent != "" {
-		url.WriteString(user.BuyOrRent + "/")
-	}
-	if user.TypeItem != "" {
-		url.WriteString(user.TypeItem + "/")
-	}
 	if user.City != "" {
 		url.WriteString(user.City + "?")
 	}
@@ -112,7 +106,7 @@ func (k *Krisha) NewScrap(dups []models.House) (*[]models.House, error) {
 
 	k.scrapMain()
 	url := k.mapUrls()
-	err := k.visitLink(krishaURL + url)
+	err := k.visitLink(krishaURL + "prodazha/kvartiry/" + url)
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +139,7 @@ func removeDuplicates(houses *[]models.House, dups []models.House) *[]models.Hou
 
 func (k *Krisha) scrapSubPage() *[]models.House {
 	houses := make([]models.House, 0)
-	time.Sleep(10 * time.Second)
+	time.Sleep(5 * time.Second)
 	k.Colly.OnHTML("div.layout__content", func(e *colly.HTMLElement) {
 		hmap := make(map[string]string)
 		removeTags(e, "a.btm-map")

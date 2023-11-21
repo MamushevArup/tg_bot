@@ -35,7 +35,7 @@ func parseInt(priceStr string) (int, error) {
 func (k *Krisha) visitLink(url string) error {
 	err := k.Colly.Visit(url)
 	if err != nil {
-		log.Fatal("Error while parsing this link ", url, err.Error())
+		log.Println("Error while parsing this link ", url, err.Error())
 		return err
 	}
 	return nil
