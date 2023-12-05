@@ -26,8 +26,10 @@ func (b *Bot) Start(db *postgres.Sql) {
 	updates := b.bot.GetUpdatesChan(u)
 
 	user := new(models.User)
+	var lastTwo []string
 	for update := range updates {
-		b.HandleUpdate(&update, user, db)
+		b.HandleUpdate(&update, user, db, &lastTwo)
+
 	}
 
 }

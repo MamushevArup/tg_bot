@@ -100,52 +100,54 @@ func New(c *colly.Collector, user *models.User) *Krisha {
 	return &Krisha{Colly: c, User: user}
 }
 
-func (k *Krisha) NewScrap(dups []models.House) (*[]models.House, error) {
+func (k *Krisha) NewScrap(dups *[]models.House) (*[]models.House, error) {
 	houses := k.scrapSubPage()
-
 	k.scrapMain()
 	url := k.mapUrls()
 	err := k.visitLink(krishaURL + "prodazha/kvartiry/" + url)
 	if err != nil {
 		return nil, err
 	}
-	removeDuplicates(houses, dups)
-	return houses, nil
+	fmt.Println(len(*houses), "Houses len in the NewScrap")
+	copyH := removeDuplicates(houses, *dups)
+	return copyH, nil
 }
-
 func removeDuplicates(houses *[]models.House, dups []models.House) *[]models.House {
+	var copyHouse []models.House
 	set := make(map[string]bool, 23)
-	for i, house := range *houses {
-		if set[house.Link] {
-			*houses = append((*houses)[:i], (*houses)[i+1:]...)
+	fmt.Println(len(copyHouse), "Before set activated")
+	for _, house := range *houses {
+		if !set[house.Link] {
+			set[house.Link] = true
+			fmt.Println("In the set removed " + house.Link)
+			copyHouse = append(copyHouse, house)
 		}
-		set[house.Link] = true
 	}
-	inter := make([]models.House, len(*houses))
-	copy(inter, *houses)
-	for i := len(*houses) - 1; i >= 0; i-- {
-		h := (*houses)[i]
+	fmt.Println(len(copyHouse), "After set ended")
+	inter := make([]models.House, len(copyHouse))
+	copy(inter, copyHouse)
+	for i := len(copyHouse) - 1; i >= 0; i-- {
+		h := (copyHouse)[i]
 		for _, d := range dups {
 			if h.Link == d.Link {
-				if i < 0 || i >= len(*houses) {
-					break
-				}
-				*houses = append((*houses)[:i], (*houses)[i+1:]...)
-				fmt.Println("INSIDE THE REMOVE DUPS", len(*houses), len(dups), h.Link)
+				copyHouse = append(copyHouse[:i], copyHouse[i+1:]...)
+				fmt.Println("INSIDE THE REMOVE DUPS", len(copyHouse), len(dups))
+				break
 			}
 		}
 	}
-	copy(dups, inter)
-	fmt.Println(len(*houses))
+	fmt.Println(len(*houses), houses)
+	fmt.Println(len(copyHouse), "CopyHouseLength")
 	fmt.Println(len(inter))
-	fmt.Println(len(dups))
-	inter = []models.House{}
-	return houses
+	fmt.Println(len(set))
+	fmt.Println(len(dups), dups)
+	copy(dups, inter)
+	return &copyHouse
 }
 
 func (k *Krisha) scrapSubPage() *[]models.House {
+	//time.Sleep(5 * time.Second)
 	houses := make([]models.House, 0)
-	time.Sleep(5 * time.Second)
 	k.Colly.OnHTML("div.layout__content", func(e *colly.HTMLElement) {
 		hmap := make(map[string]string)
 		removeTags(e, "a.btm-map")

@@ -95,7 +95,7 @@ func (s *Sql) UpdateType(types []string) error {
 	return nil
 }
 
-func (s *Sql) UpdateBuiltFrom(year uint) error {
+func (s *Sql) UpdateBuiltFrom(year *uint) error {
 	query := `update users set yearBuiltFrom = $2 where id = $1`
 	_, err := s.Db.Exec(query, s.id, year)
 	if err != nil {
@@ -105,7 +105,7 @@ func (s *Sql) UpdateBuiltFrom(year uint) error {
 	return nil
 }
 
-func (s *Sql) UpdateBuiltTo(year uint) error {
+func (s *Sql) UpdateBuiltTo(year *uint) error {
 	query := `update users set yearBuiltTo = $2 where id = $1`
 	_, err := s.Db.Exec(query, s.id, year)
 	if err != nil {
@@ -115,7 +115,7 @@ func (s *Sql) UpdateBuiltTo(year uint) error {
 	return nil
 }
 
-func (s *Sql) UpdatePriceFrom(price uint64) error {
+func (s *Sql) UpdatePriceFrom(price *uint64) error {
 	query := `update users set priceFrom = $2 where id = $1`
 	fmt.Println(s.id)
 	_, err := s.Db.Exec(query, s.id, price)
@@ -125,7 +125,7 @@ func (s *Sql) UpdatePriceFrom(price uint64) error {
 	}
 	return nil
 }
-func (s *Sql) UpdatePriceTo(price uint64) error {
+func (s *Sql) UpdatePriceTo(price *uint64) error {
 	query := `update users set priceTo = $2 where id = $1`
 	_, err := s.Db.Exec(query, s.id, price)
 	if err != nil {
@@ -134,7 +134,7 @@ func (s *Sql) UpdatePriceTo(price uint64) error {
 	}
 	return nil
 }
-func (s *Sql) UpdateFloorFrom(floor uint64) error {
+func (s *Sql) UpdateFloorFrom(floor *uint64) error {
 	query := `update users set floorFrom = $2 where id = $1`
 	_, err := s.Db.Exec(query, s.id, floor)
 	if err != nil {
@@ -143,7 +143,7 @@ func (s *Sql) UpdateFloorFrom(floor uint64) error {
 	}
 	return nil
 }
-func (s *Sql) UpdateFloorTo(floor uint64) error {
+func (s *Sql) UpdateFloorTo(floor *uint64) error {
 	query := `update users set floorTo = $2 where id = $1`
 	_, err := s.Db.Exec(query, s.id, floor)
 	if err != nil {
@@ -152,7 +152,7 @@ func (s *Sql) UpdateFloorTo(floor uint64) error {
 	}
 	return nil
 }
-func (s *Sql) UpdateFloorInTheHouseFrom(floorHouse uint64) error {
+func (s *Sql) UpdateFloorInTheHouseFrom(floorHouse *uint64) error {
 	query := `update users set floorInTheHouseFrom = $2 where id = $1`
 	_, err := s.Db.Exec(query, s.id, floorHouse)
 	if err != nil {
@@ -161,7 +161,7 @@ func (s *Sql) UpdateFloorInTheHouseFrom(floorHouse uint64) error {
 	}
 	return nil
 }
-func (s *Sql) UpdateFloorInTheHouseTo(floorHouse uint64) error {
+func (s *Sql) UpdateFloorInTheHouseTo(floorHouse *uint64) error {
 	query := `update users set floorInTheHouseTo = $2 where id = $1`
 	_, err := s.Db.Exec(query, s.id, floorHouse)
 	if err != nil {
@@ -170,7 +170,7 @@ func (s *Sql) UpdateFloorInTheHouseTo(floorHouse uint64) error {
 	}
 	return nil
 }
-func (s *Sql) UpdateAreaFrom(area string) error {
+func (s *Sql) UpdateAreaFrom(area *string) error {
 	query := `update users set areaFrom = $2 where id = $1`
 	_, err := s.Db.Exec(query, s.id, area)
 	if err != nil {
@@ -179,7 +179,7 @@ func (s *Sql) UpdateAreaFrom(area string) error {
 	}
 	return nil
 }
-func (s *Sql) UpdateAreaTo(area string) error {
+func (s *Sql) UpdateAreaTo(area *string) error {
 	query := `update users set areaTo = $2 where id = $1`
 	_, err := s.Db.Exec(query, s.id, area)
 	if err != nil {
@@ -188,7 +188,7 @@ func (s *Sql) UpdateAreaTo(area string) error {
 	}
 	return nil
 }
-func (s *Sql) UpdateKitchenFrom(kitchen string) error {
+func (s *Sql) UpdateKitchenFrom(kitchen *string) error {
 	query := `update users set kitchenFrom = $2 where id = $1`
 	_, err := s.Db.Exec(query, s.id, kitchen)
 	if err != nil {
@@ -197,7 +197,7 @@ func (s *Sql) UpdateKitchenFrom(kitchen string) error {
 	}
 	return nil
 }
-func (s *Sql) UpdateKitchenTo(kitchen string) error {
+func (s *Sql) UpdateKitchenTo(kitchen *string) error {
 	query := `update users set kitchenTo = $2 where id = $1`
 	_, err := s.Db.Exec(query, s.id, kitchen)
 	if err != nil {

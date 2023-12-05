@@ -12,7 +12,6 @@ func ChooseCity() tgbotapi.InlineKeyboardMarkup {
 		),
 		tgbotapi.NewInlineKeyboardRow(
 			tgbotapi.NewInlineKeyboardButtonData("Шымкент", "shymkent"),
-			tgbotapi.NewInlineKeyboardButtonData("Актау", "aktau"),
 		),
 	)
 	return key
@@ -39,10 +38,44 @@ func ChooseRegion(city string) tgbotapi.InlineKeyboardMarkup {
 			tgbotapi.NewInlineKeyboardButtonData("Пропустить", "-"),
 		),
 	)
-	//hmap := map[string]tgbotapi.InlineKeyboardMarkup{
-	//	"almaty": almaty,
-	//}
-	return almaty
+	var astana = tgbotapi.NewInlineKeyboardMarkup(
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("Алматы", "astana-almatinskij"),
+			tgbotapi.NewInlineKeyboardButtonData("Есильский", "astana-esilskij"),
+		),
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("Нура", "astana-nura"),
+			tgbotapi.NewInlineKeyboardButtonData("Байконур", "r-n-bajkonur"),
+		),
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("Сарыарка", "astana-saryarkinskij"),
+		),
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("Пропустить", "-"),
+		),
+	)
+	var shymkent = tgbotapi.NewInlineKeyboardMarkup(
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("Абайский", "shymkent-abajskij"),
+			tgbotapi.NewInlineKeyboardButtonData("Аль-Фарабийский", "shymkent-al-farabijskij"),
+		),
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("Енбекшинский", "shymkent-enbekshinskij"),
+			tgbotapi.NewInlineKeyboardButtonData("Туран", "shymkent-turan"),
+		),
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("Каратауский", "karatauskij"),
+		),
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("Пропустить", "-"),
+		),
+	)
+	hmap := map[string]tgbotapi.InlineKeyboardMarkup{
+		"almaty":   almaty,
+		"astana":   astana,
+		"shymkent": shymkent,
+	}
+	return hmap[city]
 }
 func CollectButtonData(v tgbotapi.InlineKeyboardMarkup) map[string]bool {
 	set := make(map[string]bool, len(v.InlineKeyboard))

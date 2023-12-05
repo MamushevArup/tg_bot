@@ -2,7 +2,6 @@ package utils
 
 import (
 	json2 "encoding/json"
-	"fmt"
 )
 
 func ConvertToJSONO(value any) (string, error) {
@@ -44,8 +43,6 @@ func EnRusHouse(m map[string]interface{}) map[string]interface{} {
 
 func EnRusUser(m map[string]interface{}) map[string]interface{} {
 	hmap := map[string]string{
-		"buy_or_rent":              "Тип",
-		"type_item":                "Недвижимость",
 		"city":                     "Город",
 		"rooms":                    "Кол-во комнат",
 		"type_house":               "Типы домов",
@@ -67,7 +64,6 @@ func EnRusUser(m map[string]interface{}) map[string]interface{} {
 		"kitchen_area":             "Площадь кухни от",
 		"kitchen_area_to":          "Площадь кухни до",
 	}
-	fmt.Println(m)
 	translatedMap := make(map[string]interface{})
 
 	for key, value := range m {
@@ -79,4 +75,21 @@ func EnRusUser(m map[string]interface{}) map[string]interface{} {
 	}
 
 	return translatedMap
+}
+func RegionEnRun(city string) string {
+	set := map[string]string{
+		"almaty":               "алматы",
+		"astana":               "астана",
+		"shymkent":             "шымкент",
+		"aktau":                "актау",
+		"almaty-aujezovskij":   "ауэзовский",
+		"almaty-alatauskij":    "алатауский",
+		"almaty-almalinskij":   "алмалинский",
+		"almaty-bostandykskij": "бостандыкский",
+		"almaty-zhetysuskij":   "жетысуский",
+		"almaty-medeuskij":     "медеуский",
+		"almaty-nauryzbajskiy": "наурызбайский",
+		"almaty-turksibskij":   "турксибский",
+	}
+	return set[city]
 }

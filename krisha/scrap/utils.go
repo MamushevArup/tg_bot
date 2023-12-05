@@ -6,7 +6,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 )
 
 func text(e *colly.HTMLElement, query string) string {
@@ -50,7 +49,7 @@ func removeTags(e *colly.HTMLElement, goquery string) {
 func (k *Krisha) scrapMain() {
 	k.Colly.OnHTML("div.a-card__header-left", func(e *colly.HTMLElement) {
 		link := e.ChildAttrs("a[href].a-card__title", "href")
-		time.Sleep(5 * time.Second)
+		//time.Sleep(5 * time.Second)
 		err := k.visitLink(krishaURL + link[0])
 		if err != nil {
 			log.Println("Error is appear here also scrap/utils package")
